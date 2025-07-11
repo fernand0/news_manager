@@ -108,3 +108,9 @@ Prints a simple "Hello, world!" message to confirm the installation is working.
 ```bash
 news-manager hello
 ```
+
+---
+
+## About This Project
+
+This project was developed using a "vibe coding" approach with the [Gemini AI CLI](https://developers.google.com/gemini/ai-hub/docs/cli). The process involved a conversational flow to build, refactor, and enhance the application step by step.
