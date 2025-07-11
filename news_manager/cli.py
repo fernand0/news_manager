@@ -15,7 +15,9 @@ def main():
 @main.command()
 def hello():
     """Prints a hello message."""
-    click.echo("Hello, world!")
+    click.echo("Welcome to News Manager CLI!")
+    click.echo("This tool helps you generate and manage news content using the Gemini API.")
+    click.echo("Try 'news-manager generate' to create a news story or 'news-manager --help' for more commands.")
 
 @main.command()
 def generate():

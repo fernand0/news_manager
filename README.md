@@ -103,7 +103,16 @@ Enlaces:
 
 ### `hello`
 
-Prints a simple "Hello, world!" message to confirm the installation is working.
+This command serves as a quick check to confirm that the `news-manager` CLI is correctly installed and accessible in your environment.
+
+**Basic Usage and Fundamental Ideas:**
+
+The `news-manager` CLI is designed to interact with the Gemini API to automate news-related tasks. Its core functionalities include:
+
+*   **`generate`**: Generates news articles based on provided text, leveraging the Gemini API's natural language processing capabilities. This is useful for quickly drafting news content from raw information.
+*   **`post`**: (Planned/Future Feature) Allows posting generated news content to various social media platforms, streamlining the distribution process.
+
+By running `news-manager hello`, you can verify your setup before diving into more complex operations like `generate` or `post`.
 
 ```bash
 news-manager hello
