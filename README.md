@@ -31,6 +31,22 @@ Or set it in your shell:
 export NEWS_INPUT_FILE="/ruta/a/tu/archivo/por/defecto.txt"
 ```
 
+### 3. Output Directory Configuration (Opcional)
+
+You can configure a default output directory for saving generated files using an environment variable:
+
+```bash
+# En tu archivo .env
+NEWS_OUTPUT_DIR="/ruta/a/tu/directorio/de/salida"
+```
+
+Or set it in your shell:
+```bash
+export NEWS_OUTPUT_DIR="/ruta/a/tu/directorio/de/salida"
+```
+
+When this variable is set, the generated news and Bluesky files will be automatically saved to this directory without needing to specify `--output-dir` each time.
+
 ## Installation
 
 First, clone the repository and navigate into the project directory:
@@ -99,6 +115,7 @@ Generates a news story by sending the content of an input file or a URL to the G
 
 - `--prompt-extra`: Instrucciones adicionales para personalizar la generación
 - `--interactive-prompt`: Modo interactivo para añadir instrucciones personalizadas
+- `--output-dir`: Directorio donde guardar los archivos generados (por defecto: usa NEWS_OUTPUT_DIR o no guarda archivos)
 
 > **Nota:** No puedes usar ambas opciones de entrada al mismo tiempo. Si usas ambas, el comando mostrará un error.
 
@@ -135,6 +152,17 @@ Generates a news story by sending the content of an input file or a URL to the G
    
    # Modo interactivo (se te preguntará qué instrucciones quieres)
    news-manager generate --url "https://ejemplo.com" --interactive-prompt
+   ```
+
+5. **Guardando archivos generados**
+   ```bash
+   # Especificar directorio de salida manualmente
+   news-manager generate --url "https://ejemplo.com" --output-dir ./mis_noticias
+   
+   # Usar directorio configurado en NEWS_OUTPUT_DIR
+   export NEWS_OUTPUT_DIR="/home/usuario/noticias"
+   news-manager generate --url "https://ejemplo.com"
+   # Los archivos se guardarán automáticamente en /home/usuario/noticias
    ```
 
 **Opciones avanzadas:**

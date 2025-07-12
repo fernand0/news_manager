@@ -3,6 +3,9 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from .llm import GeminiClient
+import re
+from datetime import datetime, timedelta
+import unicodedata
 
 # Para descarga y parsing de noticias
 import requests
@@ -45,6 +48,90 @@ def extract_main_text_from_url(url):
     # Fallback final: todo el texto visible
     return soup.get_text(separator='\n', strip=True)
 
+def siguiente_laborable(fecha):
+    """Devuelve el siguiente día laborable (lunes-viernes) a partir de una fecha dada."""
+    siguiente = fecha + timedelta(days=1)
+    while siguiente.weekday() >= 5:  # 5=sábado, 6=domingo
+        siguiente += timedelta(days=1)
+    return siguiente
+
+def extract_person_names(text):
+    """Extrae nombres de personas del texto usando patrones comunes."""
+    # Patrones para nombres de personas
+    patterns = [
+        r'\b(?:Dr\.|Dra\.|Prof\.|Profesora)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b',
+        r'\b([A-Z][a-z]+)\s+(?:y|e)\s+([A-Z][a-z]+)\b',
+        r'\b([A-Z][a-z]+)\s+([A-Z][a-z]+)\b',
+        r'\b(?:el|la)\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)\b'
+    ]
+    
+    names = set()
+    for pattern in patterns:
+        matches = re.findall(pattern, text)
+        for match in matches:
+            if isinstance(match, tuple):
+                for name in match:
+                    if len(name) > 2:  # Filtrar nombres muy cortos
+                        names.add(name.strip())
+            else:
+                if len(match) > 2:
+                    names.add(match.strip())
+    
+    return list(names)
+
+def slugify(text, max_words=4, person_names=None):
+    """Convierte un texto en un slug para el nombre de archivo, incluyendo nombres de personas."""
+    text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
+    text = re.sub(r'[^\w\s-]', '', text.lower())
+    words = text.split()
+    
+    # Si hay nombres de personas, incluirlos al principio
+    if person_names:
+        name_slug = '-'.join(person_names[:2])  # Máximo 2 nombres
+        remaining_words = words[:max_words-1] if len(words) > max_words-1 else words
+        return f"{name_slug}-{'-'.join(remaining_words)}"
+    else:
+        return '-'.join(words[:max_words])
+
+def parse_output(generated_text):
+    """Extrae título, texto, enlaces y bluesky del resultado generado."""
+    titulo = texto = bluesky = None
+    enlaces = []
+    lines = generated_text.splitlines()
+    buffer = []
+    mode = None
+    
+    for line in lines:
+        line = line.strip()
+        if not line:  # Skip empty lines
+            continue
+            
+        if line.startswith('Título:'):
+            titulo = line.replace('Título:', '').strip()
+            mode = None
+        elif line.startswith('Texto:'):
+            mode = 'texto'
+            buffer = []
+            # Check if there's text on the same line after "Texto:"
+            text_part = line.replace('Texto:', '').strip()
+            if text_part:
+                buffer.append(text_part)
+        elif line.startswith('Enlaces:'):
+            mode = 'enlaces'
+            enlaces = []
+        elif line.startswith('Bluesky:'):
+            bluesky = line.replace('Bluesky:', '').strip()
+            mode = None
+        elif mode == 'texto':
+            buffer.append(line)
+        elif mode == 'enlaces' and line.startswith('-'):
+            enlaces.append(line)
+    
+    if buffer:
+        texto = '\n'.join(buffer).strip()
+    
+    return titulo, texto, bluesky, enlaces
+
 @click.group()
 def main():
     """
@@ -77,7 +164,13 @@ def main():
     default=False,
     help='Activar modo interactivo para instrucciones adicionales'
 )
-def generate(input_file, url, prompt_extra, interactive_prompt):
+@click.option(
+    '--output-dir',
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    default=None,
+    help='Directorio donde guardar los archivos generados (por defecto: usa NEWS_OUTPUT_DIR o no guarda archivos)'
+)
+def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
     """
     Genera una noticia a partir de un archivo o una URL (opciones exclusivas).
     
@@ -86,6 +179,10 @@ def generate(input_file, url, prompt_extra, interactive_prompt):
     2. Con la variable de entorno NEWS_INPUT_FILE
     3. Por defecto usa /tmp/noticia.txt
     O bien, se puede usar --url para descargar una noticia de internet.
+    
+    El directorio de salida se puede especificar de dos formas:
+    1. Con el parámetro --output-dir
+    2. Con la variable de entorno NEWS_OUTPUT_DIR
     
     Puedes usar --prompt-extra para añadir instrucciones personalizadas.
     Usa --interactive-prompt para activar el modo interactivo.
@@ -171,6 +268,53 @@ def generate(input_file, url, prompt_extra, interactive_prompt):
         # Pasar la URL al cliente para que aparezca en los enlaces
         generated_text = client.generate_news(input_text, prompt_extra, url)
         click.echo(generated_text)
+
+        # Determinar directorio de salida
+        final_output_dir = None
+        if output_dir:
+            final_output_dir = output_dir
+        else:
+            # Verificar variable de entorno
+            env_output_dir = os.getenv('NEWS_OUTPUT_DIR')
+            if env_output_dir:
+                final_output_dir = Path(env_output_dir)
+        
+        # Guardar archivos si se especifica output_dir
+        if final_output_dir:
+            titulo, texto, bluesky, enlaces = parse_output(generated_text)
+            if not titulo or not texto:
+                click.echo("No se pudo extraer el título o el texto para guardar el archivo.", err=True)
+                return
+            
+            # Extraer nombres de personas del título y texto
+            person_names = extract_person_names(titulo + " " + texto)
+            
+            # Calcular siguiente día laborable
+            hoy = datetime.now().date()
+            fecha = siguiente_laborable(hoy)
+            fecha_str = fecha.strftime('%Y-%m-%d')
+            
+            # Generar slug incluyendo nombres de personas
+            slug = slugify(titulo, max_words=3, person_names=person_names)
+            base_name = f"{fecha_str}-{slug}"
+            final_output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Guardar noticia
+            noticia_path = final_output_dir / f"{base_name}.txt"
+            with open(noticia_path, 'w', encoding='utf-8') as f:
+                f.write(f"Título: {titulo}\n\nTexto: {texto}\n")
+                if enlaces:
+                    f.write(f"\nEnlaces:\n")
+                    for enlace in enlaces:
+                        f.write(f"{enlace}\n")
+            click.echo(f"Noticia guardada en: {noticia_path}")
+            
+            # Guardar bluesky
+            if bluesky:
+                blsky_path = final_output_dir / f"{base_name}_blsky.txt"
+                with open(blsky_path, 'w', encoding='utf-8') as f:
+                    f.write(bluesky + '\n')
+                click.echo(f"Bluesky guardado en: {blsky_path}")
 
     except (ValueError, RuntimeError) as e:
         click.echo(f"Error: {e}", err=True)
