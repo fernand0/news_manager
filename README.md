@@ -207,7 +207,7 @@ Try 'news-manager generate' to create a news story or 'news-manager --help' for 
 
 This project was developed using a collaborative approach with AI tools:
 
+- **[Google Gemini AI](https://developers.google.com/gemini/ai-hub/docs/cli)**: Used for the AI-powered news generation functionality and initial development
 - **[Cursor](https://cursor.sh/)**: The world's best AI-powered code editor was used for pair programming, code generation, and iterative development
-- **[Google Gemini AI](https://developers.google.com/gemini/ai-hub/docs/cli)**: Used for the AI-powered news generation functionality
 
 The development process involved a conversational flow to build, refactor, and enhance the application step by step, leveraging the strengths of both tools for optimal code quality and functionality.
