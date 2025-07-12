@@ -98,6 +98,7 @@ Generates a news story by sending the content of an input file or a URL to the G
 **Opciones de personalización:**
 
 - `--prompt-extra`: Instrucciones adicionales para personalizar la generación
+- `--interactive-prompt`: Modo interactivo para añadir instrucciones personalizadas
 
 > **Nota:** No puedes usar ambas opciones de entrada al mismo tiempo. Si usas ambas, el comando mostrará un error.
 
@@ -152,7 +153,7 @@ Texto: El Dr. Alistair Finch, un biólogo de la Universidad de Greendale, junto 
 
 La investigación detalla las características únicas de este insecto, que utiliza la bioluminiscencia como un posible mecanismo de defensa y comunicación. El Dr. Finch ha dedicado más de una década al estudio de la entomología en la región, mientras que la Dra. Vance es una experta en genética de insectos. La Universidad de Greendale ha financiado gran parte de esta expedición.
 Enlaces:
-- [URL del estudio o comunicado de prensa si estuviera disponible]
+- https://ejemplo.com/noticia-original
 Bluesky: Descubierta una nueva especie de mariposa luminiscente en el Amazonas por los doctores Alistair Finch y Elena Vance. Este increíble hallazgo abre nuevas puertas a la investigación de la bioluminiscencia. #ciencia #naturaleza #descubrimiento [enlace a la noticia]
 ```
 

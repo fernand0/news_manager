@@ -168,7 +168,8 @@ def generate(input_file, url, prompt_extra, interactive_prompt):
             click.echo(f"--- Instrucciones adicionales: {prompt_extra} ---")
         
         client = GeminiClient()
-        generated_text = client.generate_news(input_text, prompt_extra)
+        # Pasar la URL al cliente para que aparezca en los enlaces
+        generated_text = client.generate_news(input_text, prompt_extra, url)
         click.echo(generated_text)
 
     except (ValueError, RuntimeError) as e:

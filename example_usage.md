@@ -168,6 +168,24 @@ news-manager generate --url "https://i3a.unizar.es/noticia" --interactive-prompt
 news-manager generate --help
 ```
 
+### 11. **Funcionalidad de URLs en Enlaces**
+
+Cuando uses la opción `--url`, la URL aparecerá automáticamente en la sección de enlaces de la noticia generada:
+
+```bash
+# La URL aparecerá en los enlaces
+news-manager generate --url "https://ejemplo.com/noticia"
+
+# Salida esperada:
+# Enlaces:
+# - https://ejemplo.com/noticia
+```
+
+Esto es especialmente útil para:
+- Mantener referencia a la fuente original
+- Facilitar el acceso a la noticia completa
+- Cumplir con estándares de citación
+
 ## 🔧 **Ventajas de las Mejoras**
 
 ✅ **Flexibilidad**: Puedes usar archivos en cualquier ubicación  

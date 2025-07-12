@@ -30,13 +30,14 @@ class LLMClient:
     A generic base class for Large Language Model clients.
     Subclasses must implement the generate_news method.
     """
-    def generate_news(self, input_text: str, prompt_extra: Optional[str] = None) -> str:
+    def generate_news(self, input_text: str, prompt_extra: Optional[str] = None, url: Optional[str] = None) -> str:
         """
         Generates a news article from the given input text.
         
         Args:
             input_text: The source text for the news article.
             prompt_extra: Optional additional instructions for the AI.
+            url: Optional URL that should be included in the links section.
         
         Returns:
             The generated news article as a string.
@@ -56,7 +57,7 @@ class GeminiClient(LLMClient):
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
-    def generate_news(self, input_text: str, prompt_extra: Optional[str] = None) -> str:
+    def generate_news(self, input_text: str, prompt_extra: Optional[str] = None, url: Optional[str] = None) -> str:
         """
         Generates a news story by calling the Gemini API.
         """
@@ -66,6 +67,10 @@ class GeminiClient(LLMClient):
         # Añadir instrucciones adicionales si se proporcionan
         if prompt_extra:
             full_prompt += f"\n\n**Instrucciones adicionales:** {prompt_extra}"
+        
+        # Añadir la URL si se proporciona
+        if url:
+            full_prompt += f"\n\n**URL de origen:** {url}"
         
         full_prompt += f"\n\n--- Texto de entrada ---\n{input_text}"
         
