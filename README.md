@@ -211,3 +211,7 @@ This project was developed using a collaborative approach with AI tools:
 - **[Cursor](https://cursor.sh/)**: The world's best AI-powered code editor was used for pair programming, code generation, and iterative development
 
 The development process involved a conversational flow to build, refactor, and enhance the application step by step, leveraging the strengths of both tools for optimal code quality and functionality.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

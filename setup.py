@@ -6,7 +6,7 @@ setup(
     description='A CLI tool for generating news articles using Google Gemini API',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    author='Fernando Tricas',
+    author='Fernando Tricas García',
     author_email='fernand0@gmail.com',
     url='https://github.com/fernand0/news_manager',
     packages=find_packages(),
@@ -33,5 +33,6 @@ setup(
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
     ],
+    license='MIT',
     python_requires='>=3.8',
 )
