@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Manager - Generador de Noticias con IA</title>
+    <meta name="description" content="CLI para generar noticias usando Google Gemini AI. Extrae contenido de URLs y archivos, genera noticias estructuradas y posts para redes sociales.">
+    <meta name="keywords" content="news generator, AI, Gemini, CLI, Python, journalism, automation">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://fernand0.github.io/news_manager/">
+    <meta property="og:title" content="News Manager - Generador de Noticias con IA">
+    <meta property="og:description" content="CLI para generar noticias usando Google Gemini AI">
+    <meta property="og:image" content="https://fernand0.github.io/news_manager/assets/og-image.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://fernand0.github.io/news_manager/">
+    <meta property="twitter:title" content="News Manager - Generador de Noticias con IA">
+    <meta property="twitter:description" content="CLI para generar noticias usando Google Gemini AI">
+    <meta property="twitter:image" content="https://fernand0.github.io/news_manager/assets/og-image.png">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 60px 0;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-card p {
+            opacity: 0.9;
+        }
+
+        .demo-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+        }
+
+        .code-block pre {
+            margin: 0;
+        }
+
+        .installation {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+
+        .usage-examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .example-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            transition: border-color 0.3s ease;
+        }
+
+        .example-card:hover {
+            border-color: #667eea;
+        }
+
+        .example-card h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            color: white;
+            opacity: 0.8;
+        }
+
+        .tech-stack {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .tech-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📰 News Manager</h1>
+            <p>Genera noticias profesionales usando Inteligencia Artificial</p>
+            <p>CLI potente que utiliza Google Gemini AI para crear noticias estructuradas</p>
+            
+            <div class="cta-buttons">
+                <a href="https://github.com/fernand0/news_manager" class="btn btn-primary">
+                    🚀 Ver en GitHub
+                </a>
+                <a href="#installation" class="btn btn-secondary">
+                    📦 Instalar
+                </a>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section>
+                <h2>✨ Características Principales</h2>
+                <div class="features">
+                    <div class="feature-card">
+                        <h3>🤖 IA Avanzada</h3>
+                        <p>Utiliza Google Gemini AI para generar noticias de alta calidad con estructura profesional.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🌐 Extracción Web</h3>
+                        <p>Descarga y extrae contenido automáticamente desde URLs de noticias online.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📝 Personalización</h3>
+                        <p>Instrucciones personalizadas para enfocar el contenido según tus necesidades.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📁 Gestión de Archivos</h3>
+                        <p>Guarda automáticamente noticias y posts con nombres inteligentes y fechas.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔗 Enlaces Directos</h3>
+                        <p>Genera enlaces limpios sin formato markdown para fácil uso.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🧪 Tests Completos</h3>
+                        <p>Suite de 50 tests que garantizan la calidad y fiabilidad del código.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="installation" class="installation">
+                <h2>📦 Instalación Rápida</h2>
+                <div class="code-block">
+                    <pre><code># Clonar el repositorio
+git clone https://github.com/fernand0/news_manager.git
+cd news_manager
+
+# Crear entorno virtual
+python -m venv .venv
+source .venv/bin/activate  # En Windows: .venv\Scripts\activate
+
+# Instalar dependencias
+pip install -r requirements.txt
+
+# Instalar en modo editable
+pip install -e .
+
+# Configurar API key
+echo "GOOGLE_API_KEY=tu_api_key_aqui" > .env</code></pre>
+                </div>
+            </section>
+
+            <section>
+                <h2>🚀 Ejemplos de Uso</h2>
+                <div class="usage-examples">
+                    <div class="example-card">
+                        <h4>📄 Desde Archivo Local</h4>
+                        <div class="code-block">
+                            <pre><code>news-manager generate -i noticia.txt</code></pre>
+                        </div>
+                    </div>
+                    <div class="example-card">
+                        <h4>🌐 Desde URL</h4>
+                        <div class="code-block">
+                            <pre><code>news-manager generate --url "https://ejemplo.com/noticia"</code></pre>
+                        </div>
+                    </div>
+                    <div class="example-card">
+                        <h4>🎯 Con Instrucciones</h4>
+                        <div class="code-block">
+                            <pre><code>news-manager generate --url "https://ejemplo.com" --prompt-extra "céntrate en los aspectos tecnológicos"</code></pre>
+                        </div>
+                    </div>
+                    <div class="example-card">
+                        <h4>💾 Guardar Archivos</h4>
+                        <div class="code-block">
+                            <pre><code>news-manager generate --url "https://ejemplo.com" --output-dir ./noticias</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="demo-section">
+                <h2>📊 Salida de Ejemplo</h2>
+                <div class="code-block">
+                    <pre><code>Título: Investigadores españoles desarrollan nueva técnica de purificación de agua
+
+Texto: El Dr. Carlos Ruiz y la Dra. Ana Martínez, del Instituto de Tecnología de Madrid, han desarrollado una innovadora técnica de purificación de agua utilizando nanopartículas magnéticas. Su proyecto, supervisado por el Dr. Miguel García, ha logrado resultados significativos publicados en la prestigiosa revista Nature.
+
+Enlaces:
+- https://www.nature.com/ (Ejemplo, reemplazar con link real si existe)
+- https://www.mit.es/ (Ejemplo, reemplazar con link al Instituto de Tecnología de Madrid)
+
+Bluesky: Innovación en purificación de agua! Los Drs. Ruiz & Martínez (Instituto de Tecnología de Madrid) desarrollan técnica con nanopartículas magnéticas, publicada en Nature. #AguaPotable #Nanotecnología #Innovación #CienciaEspañola [enlace a la noticia]</code></pre>
+                </div>
+            </section>
+
+            <section>
+                <h2>🛠️ Stack Tecnológico</h2>
+                <div class="tech-stack">
+                    <span class="tech-badge">Python 3.8+</span>
+                    <span class="tech-badge">Google Gemini AI</span>
+                    <span class="tech-badge">Click CLI</span>
+                    <span class="tech-badge">BeautifulSoup4</span>
+                    <span class="tech-badge">Requests</span>
+                    <span class="tech-badge">pytest</span>
+                </div>
+            </section>
+
+            <section>
+                <h2>📈 Características Avanzadas</h2>
+                <ul style="margin: 20px 0; padding-left: 20px;">
+                    <li><strong>Configuración Flexible:</strong> Variables de entorno para archivos y directorios por defecto</li>
+                    <li><strong>Extracción Inteligente:</strong> Descarga automática de contenido web con filtrado</li>
+                    <li><strong>Nombres Inteligentes:</strong> Generación automática de nombres de archivo con fechas y personas</li>
+                    <li><strong>Modo Interactivo:</strong> Instrucciones personalizadas durante la ejecución</li>
+                    <li><strong>Manejo de Errores:</strong> Validación robusta y mensajes de error claros</li>
+                    <li><strong>Tests Completos:</strong> 50 tests que cubren todas las funcionalidades</li>
+                </ul>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>Desarrollado con ❤️ usando <a href="https://cursor.sh/" style="color: white;">Cursor</a> y <a href="https://developers.google.com/gemini" style="color: white;">Google Gemini AI</a></p>
+            <p>Licenciado bajo <a href="https://github.com/fernand0/news_manager/blob/main/LICENSE" style="color: white;">MIT License</a></p>
+            <p>© 2025 Fernando Tricas García</p>
+        </footer>
+    </div>
+</body>
+</html> 

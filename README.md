@@ -212,6 +212,19 @@ This project was developed using a collaborative approach with AI tools:
 
 The development process involved a conversational flow to build, refactor, and enhance the application step by step, leveraging the strengths of both tools for optimal code quality and functionality.
 
+## 🌐 Website
+
+Visit our beautiful website to learn more about News Manager:
+
+**[📰 News Manager Website](https://fernand0.github.io/news_manager/)**
+
+The website features:
+- ✨ Modern, responsive design
+- 📱 Mobile-friendly interface
+- 🚀 Interactive examples
+- 📊 Live demonstrations
+- 🛠️ Complete documentation
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

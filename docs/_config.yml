@@ -1,0 +1,38 @@
+title: News Manager
+description: CLI para generar noticias usando Google Gemini AI
+url: "https://fernand0.github.io"
+baseurl: "/news_manager"
+
+# Build settings
+theme: jekyll-theme-cayman
+plugins:
+  - jekyll-feed
+
+# SEO
+author:
+  name: Fernando Tricas García
+  email: fernand0@gmail.com
+  url: https://github.com/fernand0
+
+# Social
+social:
+  github: fernand0
+  twitter: fernand0
+
+# Repository
+repository:
+  name: news_manager
+  url: https://github.com/fernand0/news_manager
+
+# Analytics (opcional)
+google_analytics: # UA-XXXXXXXX-X
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/ 
