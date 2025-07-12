@@ -17,6 +17,20 @@ This project uses the Google Gemini API. You need to provide your API key in an 
 
 > **Note:** The `.env` file is included in `.gitignore` and should not be committed to your repository.
 
+### 2. Input File Configuration (Opcional)
+
+You can configure a default input file using an environment variable:
+
+```bash
+# En tu archivo .env
+NEWS_INPUT_FILE="/ruta/a/tu/archivo/por/defecto.txt"
+```
+
+Or set it in your shell:
+```bash
+export NEWS_INPUT_FILE="/ruta/a/tu/archivo/por/defecto.txt"
+```
+
 ## Installation
 
 First, clone the repository and navigate into the project directory:
@@ -74,7 +88,25 @@ uv pip install -e .
 
 ### `generate`
 
-Generates a news story by sending the content of `/tmp/noticia.txt` to the Gemini API.
+Generates a news story by sending the content of an input file to the Gemini API.
+
+**Opciones de archivo de entrada:**
+
+1. **Parámetro directo** (recomendado):
+   ```bash
+   news-manager generate --input-file /ruta/a/tu/archivo.txt
+   ```
+
+2. **Variable de entorno**:
+   ```bash
+   export NEWS_INPUT_FILE="/ruta/a/tu/archivo.txt"
+   news-manager generate
+   ```
+
+3. **Archivo por defecto** (`/tmp/noticia.txt`):
+   ```bash
+   news-manager generate
+   ```
 
 **How to run:**
 
@@ -87,6 +119,15 @@ Generates a news story by sending the content of `/tmp/noticia.txt` to the Gemin
     ```bash
     news-manager generate
     ```
+
+**Opciones avanzadas:**
+```bash
+# Usar un archivo específico
+news-manager generate -i ./mi_noticia.txt
+
+# Ver ayuda del comando
+news-manager generate --help
+```
 
 **Example Output:**
 
