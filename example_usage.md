@@ -186,6 +186,100 @@ Esto es especialmente útil para:
 - Facilitar el acceso a la noticia completa
 - Cumplir con estándares de citación
 
+## 🎯 **Nueva Funcionalidad: Directorio de Salida Configurable**
+
+### 12. **Configurar Directorio de Salida Permanente**
+
+Puedes configurar un directorio por defecto para guardar automáticamente los archivos generados:
+
+```bash
+# En tu archivo .env
+NEWS_OUTPUT_DIR="/home/usuario/noticias/generadas"
+
+# O en tu shell
+export NEWS_OUTPUT_DIR="/home/usuario/noticias/generadas"
+
+# Ahora los archivos se guardarán automáticamente
+news-manager generate --url "https://ejemplo.com/noticia"
+# Los archivos se guardarán en /home/usuario/noticias/generadas/
+```
+
+### 13. **Especificar Directorio de Salida Manualmente**
+
+```bash
+# Directorio específico para esta ejecución
+news-manager generate --url "https://ejemplo.com/noticia" --output-dir ./mis_noticias
+
+# Crear directorio si no existe
+news-manager generate -i noticia.txt --output-dir ./nuevas_noticias
+```
+
+### 14. **Formato de Archivos Guardados**
+
+Los archivos se guardan con un formato estructurado y legible:
+
+**Archivo de noticia** (`2025-07-14-nombre-slug.txt`):
+```
+Título: Investigadores españoles desarrollan nueva técnica de purificación de agua
+
+Texto: El Dr. Carlos Ruiz y la Dra. Ana Martínez, del Instituto de Tecnología de Madrid, han desarrollado una innovadora técnica de purificación de agua utilizando nanopartículas magnéticas...
+
+Enlaces:
+- https://www.nature.com/ (Ejemplo, reemplazar con link real si existe)
+- https://www.mit.es/ (Ejemplo, reemplazar con link al Instituto de Tecnología de Madrid)
+```
+
+**Archivo de Bluesky** (`2025-07-14-nombre-slug_blsky.txt`):
+```
+Innovación en purificación de agua! Los Drs. Ruiz & Martínez (Instituto de Tecnología de Madrid) desarrollan técnica con nanopartículas magnéticas, publicada en Nature. #AguaPotable #Nanotecnología #Innovación #CienciaEspañola [enlace a la noticia]
+```
+
+### 15. **Nomenclatura de Archivos**
+
+Los archivos se nombran automáticamente con:
+- **Fecha**: Siguiente día laborable (YYYY-MM-DD)
+- **Slug**: Palabras clave del título + nombres de protagonistas
+- **Extensión**: `.txt` para noticias, `_blsky.txt` para posts de Bluesky
+
+**Ejemplos de nombres de archivo:**
+```
+2025-07-14-Carlos-Ana-investigadores-espanoles.txt
+2025-07-14-Carlos-Ana-investigadores-espanoles_blsky.txt
+2025-07-14-Maria-Gonzalez-nueva-tecnologia.txt
+2025-07-14-Maria-Gonzalez-nueva-tecnologia_blsky.txt
+```
+
+### 16. **Casos de Uso del Directorio de Salida**
+
+```bash
+# Configurar directorio de trabajo
+export NEWS_OUTPUT_DIR="/home/usuario/proyectos/noticias"
+
+# Generar múltiples noticias
+news-manager generate --url "https://noticia1.com" --prompt-extra "céntrate en los aspectos científicos"
+news-manager generate --url "https://noticia2.com" --prompt-extra "enfócate en el impacto social"
+news-manager generate --url "https://noticia3.com" --prompt-extra "destaca los logros obtenidos"
+
+# Todos los archivos se guardarán en /home/usuario/proyectos/noticias/
+```
+
+### 17. **Formato de Enlaces Simplificado**
+
+Los enlaces ahora aparecen como URLs directas, sin formato markdown:
+
+```bash
+# Antes (formato markdown):
+# - [Enlace a la publicación en Nature]
+
+# Ahora (formato directo):
+# - https://www.nature.com/ (Ejemplo, reemplazar con link real si existe)
+```
+
+Esto facilita:
+- Copiar y pegar URLs directamente
+- Leer los enlaces de forma más clara
+- Mantener un formato consistente en archivos guardados
+
 ## 🔧 **Ventajas de las Mejoras**
 
 ✅ **Flexibilidad**: Puedes usar archivos en cualquier ubicación  
@@ -197,4 +291,7 @@ Esto es especialmente útil para:
 ✅ **Personalización**: Instrucciones adicionales con `--prompt-extra`  
 ✅ **Modo interactivo**: `--interactive-prompt` para instrucciones dinámicas  
 ✅ **Extracción inteligente**: Descarga y parsing automático de URLs  
-✅ **Exclusividad**: Opciones claras y sin conflictos
+✅ **Exclusividad**: Opciones claras y sin conflictos  
+✅ **Directorio de salida configurable**: Variable `NEWS_OUTPUT_DIR` para guardar archivos automáticamente  
+✅ **Formato de enlaces limpio**: URLs directas sin formato markdown  
+✅ **Archivos estructurados**: Etiquetas explícitas "Título:", "Texto:", "Enlaces:" en archivos guardados
