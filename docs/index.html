@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>News Manager - Generador de Noticias con IA</title>
-    <meta name="description" content="CLI para generar noticias usando Google Gemini AI. Extrae contenido de URLs y archivos, genera noticias estructuradas y posts para redes sociales.">
+    <title>News Manager - AI-Powered News Generator</title>
+    <meta name="description" content="CLI tool for generating news articles using Google Gemini AI. Extract content from URLs and files, generate structured news and social media posts.">
     <meta name="keywords" content="news generator, AI, Gemini, CLI, Python, journalism, automation">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://fernand0.github.io/news_manager/">
-    <meta property="og:title" content="News Manager - Generador de Noticias con IA">
-    <meta property="og:description" content="CLI para generar noticias usando Google Gemini AI">
+    <meta property="og:title" content="News Manager - AI-Powered News Generator">
+    <meta property="og:description" content="CLI tool for generating news articles using Google Gemini AI">
     <meta property="og:image" content="https://fernand0.github.io/news_manager/assets/og-image.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://fernand0.github.io/news_manager/">
-    <meta property="twitter:title" content="News Manager - Generador de Noticias con IA">
-    <meta property="twitter:description" content="CLI para generar noticias usando Google Gemini AI">
+    <meta property="twitter:title" content="News Manager - AI-Powered News Generator">
+    <meta property="twitter:description" content="CLI tool for generating news articles using Google Gemini AI">
     <meta property="twitter:image" content="https://fernand0.github.io/news_manager/assets/og-image.png">
 
     <style>
@@ -40,6 +40,38 @@
             max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
+        }
+
+        .language-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            padding: 8px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .language-toggle button {
+            background: none;
+            border: none;
+            padding: 4px 8px;
+            margin: 0 2px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .language-toggle button.active {
+            background: #34495e;
+            color: white;
+        }
+
+        .language-toggle button:hover:not(.active) {
+            background: #ecf0f1;
         }
 
         .header {
@@ -262,6 +294,19 @@
             color: #2c3e50;
         }
 
+        .lang-en {
+            display: none;
+        }
+
+        .lang-es {
+            display: none;
+        }
+
+        .lang-en.active,
+        .lang-es.active {
+            display: block;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2.2rem;
@@ -275,61 +320,144 @@
             .features {
                 grid-template-columns: 1fr;
             }
+
+            .language-toggle {
+                position: static;
+                margin-bottom: 20px;
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="language-toggle">
+        <button onclick="switchLanguage('en')" class="active" id="btn-en">EN</button>
+        <button onclick="switchLanguage('es')" id="btn-es">ES</button>
+    </div>
+
     <div class="container">
         <header class="header">
-            <h1>📰 News Manager</h1>
-            <p>Genera noticias profesionales usando Inteligencia Artificial</p>
-            <p>CLI potente que utiliza Google Gemini AI para crear noticias estructuradas</p>
-            
-            <div class="cta-buttons">
-                <a href="https://github.com/fernand0/news_manager" class="btn btn-primary">
-                    🚀 Ver en GitHub
-                </a>
-                <a href="#installation" class="btn btn-secondary">
-                    📦 Instalar
-                </a>
+            <div class="lang-en active">
+                <h1>📰 News Manager</h1>
+                <p>Generate professional news articles using Artificial Intelligence</p>
+                <p>Powerful CLI that uses Google Gemini AI to create structured news</p>
+                
+                <div class="cta-buttons">
+                    <a href="https://github.com/fernand0/news_manager" class="btn btn-primary">
+                        🚀 View on GitHub
+                    </a>
+                    <a href="#installation" class="btn btn-secondary">
+                        📦 Install
+                    </a>
+                </div>
+            </div>
+
+            <div class="lang-es">
+                <h1>📰 News Manager</h1>
+                <p>Genera noticias profesionales usando Inteligencia Artificial</p>
+                <p>CLI potente que utiliza Google Gemini AI para crear noticias estructuradas</p>
+                
+                <div class="cta-buttons">
+                    <a href="https://github.com/fernand0/news_manager" class="btn btn-primary">
+                        🚀 Ver en GitHub
+                    </a>
+                    <a href="#installation" class="btn btn-secondary">
+                        📦 Instalar
+                    </a>
+                </div>
             </div>
         </header>
 
         <main class="main-content">
             <section>
-                <h2>✨ Características Principales</h2>
-                <div class="features">
-                    <div class="feature-card">
-                        <h3>🤖 IA Avanzada</h3>
-                        <p>Utiliza Google Gemini AI para generar noticias de alta calidad con estructura profesional.</p>
+                <div class="lang-en active">
+                    <h2>✨ Key Features</h2>
+                    <div class="features">
+                        <div class="feature-card">
+                            <h3>🤖 Advanced AI</h3>
+                            <p>Uses Google Gemini AI to generate high-quality news with professional structure.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>🌐 Web Extraction</h3>
+                            <p>Automatically downloads and extracts content from online news URLs.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>📝 Customization</h3>
+                            <p>Custom instructions to focus content according to your needs.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>📁 File Management</h3>
+                            <p>Automatically saves news and posts with smart names and dates.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>🔗 Direct Links</h3>
+                            <p>Generates clean links without markdown formatting for easy use.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>🧪 Complete Tests</h3>
+                            <p>Suite of 50 tests that guarantee code quality and reliability.</p>
+                        </div>
                     </div>
-                    <div class="feature-card">
-                        <h3>🌐 Extracción Web</h3>
-                        <p>Descarga y extrae contenido automáticamente desde URLs de noticias online.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3>📝 Personalización</h3>
-                        <p>Instrucciones personalizadas para enfocar el contenido según tus necesidades.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3>📁 Gestión de Archivos</h3>
-                        <p>Guarda automáticamente noticias y posts con nombres inteligentes y fechas.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3>🔗 Enlaces Directos</h3>
-                        <p>Genera enlaces limpios sin formato markdown para fácil uso.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h3>🧪 Tests Completos</h3>
-                        <p>Suite de 50 tests que garantizan la calidad y fiabilidad del código.</p>
+                </div>
+
+                <div class="lang-es">
+                    <h2>✨ Características Principales</h2>
+                    <div class="features">
+                        <div class="feature-card">
+                            <h3>🤖 IA Avanzada</h3>
+                            <p>Utiliza Google Gemini AI para generar noticias de alta calidad con estructura profesional.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>🌐 Extracción Web</h3>
+                            <p>Descarga y extrae contenido automáticamente desde URLs de noticias online.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>📝 Personalización</h3>
+                            <p>Instrucciones personalizadas para enfocar el contenido según tus necesidades.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>📁 Gestión de Archivos</h3>
+                            <p>Guarda automáticamente noticias y posts con nombres inteligentes y fechas.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>🔗 Enlaces Directos</h3>
+                            <p>Genera enlaces limpios sin formato markdown para fácil uso.</p>
+                        </div>
+                        <div class="feature-card">
+                            <h3>🧪 Tests Completos</h3>
+                            <p>Suite de 50 tests que garantizan la calidad y fiabilidad del código.</p>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <section id="installation" class="installation">
-                <h2>📦 Instalación Rápida</h2>
-                <div class="code-block">
-                    <pre><code># Clonar el repositorio
+                <div class="lang-en active">
+                    <h2>📦 Quick Installation</h2>
+                    <div class="code-block">
+                        <pre><code># Clone the repository
+git clone https://github.com/fernand0/news_manager.git
+cd news_manager
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Install in editable mode
+pip install -e .
+
+# Configure API key
+echo "GOOGLE_API_KEY=your_api_key_here" > .env</code></pre>
+                    </div>
+                </div>
+
+                <div class="lang-es">
+                    <h2>📦 Instalación Rápida</h2>
+                    <div class="code-block">
+                        <pre><code># Clonar el repositorio
 git clone https://github.com/fernand0/news_manager.git
 cd news_manager
 
@@ -345,43 +473,92 @@ pip install -e .
 
 # Configurar API key
 echo "GOOGLE_API_KEY=tu_api_key_aqui" > .env</code></pre>
+                    </div>
                 </div>
             </section>
 
             <section>
-                <h2>🚀 Ejemplos de Uso</h2>
-                <div class="usage-examples">
-                    <div class="example-card">
-                        <h4>📄 Desde Archivo Local</h4>
-                        <div class="code-block">
-                            <pre><code>news-manager generate -i noticia.txt</code></pre>
+                <div class="lang-en active">
+                    <h2>🚀 Usage Examples</h2>
+                    <div class="usage-examples">
+                        <div class="example-card">
+                            <h4>📄 From Local File</h4>
+                            <div class="code-block">
+                                <pre><code>news-manager generate -i news.txt</code></pre>
+                            </div>
+                        </div>
+                        <div class="example-card">
+                            <h4>🌐 From URL</h4>
+                            <div class="code-block">
+                                <pre><code>news-manager generate --url "https://example.com/news"</code></pre>
+                            </div>
+                        </div>
+                        <div class="example-card">
+                            <h4>🎯 With Instructions</h4>
+                            <div class="code-block">
+                                <pre><code>news-manager generate --url "https://example.com" --prompt-extra "focus on technological aspects"</code></pre>
+                            </div>
+                        </div>
+                        <div class="example-card">
+                            <h4>💾 Save Files</h4>
+                            <div class="code-block">
+                                <pre><code>news-manager generate --url "https://example.com" --output-dir ./news</code></pre>
+                            </div>
                         </div>
                     </div>
-                    <div class="example-card">
-                        <h4>🌐 Desde URL</h4>
-                        <div class="code-block">
-                            <pre><code>news-manager generate --url "https://ejemplo.com/noticia"</code></pre>
+                </div>
+
+                <div class="lang-es">
+                    <h2>🚀 Ejemplos de Uso</h2>
+                    <div class="usage-examples">
+                        <div class="example-card">
+                            <h4>📄 Desde Archivo Local</h4>
+                            <div class="code-block">
+                                <pre><code>news-manager generate -i noticia.txt</code></pre>
+                            </div>
                         </div>
-                    </div>
-                    <div class="example-card">
-                        <h4>🎯 Con Instrucciones</h4>
-                        <div class="code-block">
-                            <pre><code>news-manager generate --url "https://ejemplo.com" --prompt-extra "céntrate en los aspectos tecnológicos"</code></pre>
+                        <div class="example-card">
+                            <h4>🌐 Desde URL</h4>
+                            <div class="code-block">
+                                <pre><code>news-manager generate --url "https://ejemplo.com/noticia"</code></pre>
+                            </div>
                         </div>
-                    </div>
-                    <div class="example-card">
-                        <h4>💾 Guardar Archivos</h4>
-                        <div class="code-block">
-                            <pre><code>news-manager generate --url "https://ejemplo.com" --output-dir ./noticias</code></pre>
+                        <div class="example-card">
+                            <h4>🎯 Con Instrucciones</h4>
+                            <div class="code-block">
+                                <pre><code>news-manager generate --url "https://ejemplo.com" --prompt-extra "céntrate en los aspectos tecnológicos"</code></pre>
+                            </div>
+                        </div>
+                        <div class="example-card">
+                            <h4>💾 Guardar Archivos</h4>
+                            <div class="code-block">
+                                <pre><code>news-manager generate --url "https://ejemplo.com" --output-dir ./noticias</code></pre>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
             <section class="demo-section">
-                <h2>📊 Salida de Ejemplo</h2>
-                <div class="code-block">
-                    <pre><code>Título: Investigadores españoles desarrollan nueva técnica de purificación de agua
+                <div class="lang-en active">
+                    <h2>📊 Example Output</h2>
+                    <div class="code-block">
+                        <pre><code>Title: Spanish researchers develop new water purification technique
+
+Text: Dr. Carlos Ruiz and Dr. Ana Martínez from the Madrid Institute of Technology have developed an innovative water purification technique using magnetic nanoparticles. Their project, supervised by Dr. Miguel García, has achieved significant results published in the prestigious journal Nature.
+
+Links:
+- https://www.nature.com/ (Example, replace with real link if available)
+- https://www.mit.es/ (Example, replace with link to Madrid Institute of Technology)
+
+Bluesky: Innovation in water purification! Drs. Ruiz & Martínez (Madrid Institute of Technology) develop technique with magnetic nanoparticles, published in Nature. #CleanWater #Nanotechnology #Innovation #SpanishScience [link to news]</code></pre>
+                    </div>
+                </div>
+
+                <div class="lang-es">
+                    <h2>📊 Salida de Ejemplo</h2>
+                    <div class="code-block">
+                        <pre><code>Título: Investigadores españoles desarrollan nueva técnica de purificación de agua
 
 Texto: El Dr. Carlos Ruiz y la Dra. Ana Martínez, del Instituto de Tecnología de Madrid, han desarrollado una innovadora técnica de purificación de agua utilizando nanopartículas magnéticas. Su proyecto, supervisado por el Dr. Miguel García, ha logrado resultados significativos publicados en la prestigiosa revista Nature.
 
@@ -390,11 +567,12 @@ Enlaces:
 - https://www.mit.es/ (Ejemplo, reemplazar con link al Instituto de Tecnología de Madrid)
 
 Bluesky: Innovación en purificación de agua! Los Drs. Ruiz & Martínez (Instituto de Tecnología de Madrid) desarrollan técnica con nanopartículas magnéticas, publicada en Nature. #AguaPotable #Nanotecnología #Innovación #CienciaEspañola [enlace a la noticia]</code></pre>
+                    </div>
                 </div>
             </section>
 
             <section>
-                <h2>🛠️ Stack Tecnológico</h2>
+                <h2>🛠️ Tech Stack</h2>
                 <div class="tech-stack">
                     <span class="tech-badge">Python 3.8+</span>
                     <span class="tech-badge">Google Gemini AI</span>
@@ -406,23 +584,74 @@ Bluesky: Innovación en purificación de agua! Los Drs. Ruiz & Martínez (Instit
             </section>
 
             <section>
-                <h2>📈 Características Avanzadas</h2>
-                <ul style="margin: 20px 0; padding-left: 20px;">
-                    <li><strong>Configuración Flexible:</strong> Variables de entorno para archivos y directorios por defecto</li>
-                    <li><strong>Extracción Inteligente:</strong> Descarga automática de contenido web con filtrado</li>
-                    <li><strong>Nombres Inteligentes:</strong> Generación automática de nombres de archivo con fechas y personas</li>
-                    <li><strong>Modo Interactivo:</strong> Instrucciones personalizadas durante la ejecución</li>
-                    <li><strong>Manejo de Errores:</strong> Validación robusta y mensajes de error claros</li>
-                    <li><strong>Tests Completos:</strong> 50 tests que cubren todas las funcionalidades</li>
-                </ul>
+                <div class="lang-en active">
+                    <h2>📈 Advanced Features</h2>
+                    <ul style="margin: 20px 0; padding-left: 20px;">
+                        <li><strong>Flexible Configuration:</strong> Environment variables for default files and directories</li>
+                        <li><strong>Smart Extraction:</strong> Automatic web content download with filtering</li>
+                        <li><strong>Smart Names:</strong> Automatic filename generation with dates and people</li>
+                        <li><strong>Interactive Mode:</strong> Custom instructions during execution</li>
+                        <li><strong>Error Handling:</strong> Robust validation and clear error messages</li>
+                        <li><strong>Complete Tests:</strong> 50 tests covering all functionalities</li>
+                    </ul>
+                </div>
+
+                <div class="lang-es">
+                    <h2>📈 Características Avanzadas</h2>
+                    <ul style="margin: 20px 0; padding-left: 20px;">
+                        <li><strong>Configuración Flexible:</strong> Variables de entorno para archivos y directorios por defecto</li>
+                        <li><strong>Extracción Inteligente:</strong> Descarga automática de contenido web con filtrado</li>
+                        <li><strong>Nombres Inteligentes:</strong> Generación automática de nombres de archivo con fechas y personas</li>
+                        <li><strong>Modo Interactivo:</strong> Instrucciones personalizadas durante la ejecución</li>
+                        <li><strong>Manejo de Errores:</strong> Validación robusta y mensajes de error claros</li>
+                        <li><strong>Tests Completos:</strong> 50 tests que cubren todas las funcionalidades</li>
+                    </ul>
+                </div>
             </section>
         </main>
 
         <footer class="footer">
-            <p>Desarrollado con ❤️ usando <a href="https://cursor.sh/">Cursor</a> y <a href="https://developers.google.com/gemini">Google Gemini AI</a></p>
-            <p>Licenciado bajo <a href="https://github.com/fernand0/news_manager/blob/main/LICENSE">MIT License</a></p>
-            <p>© 2025 Fernando Tricas García</p>
+            <div class="lang-en active">
+                <p>Developed with ❤️ using <a href="https://cursor.sh/">Cursor</a> and <a href="https://developers.google.com/gemini">Google Gemini AI</a></p>
+                <p>Licensed under <a href="https://github.com/fernand0/news_manager/blob/main/LICENSE">MIT License</a></p>
+                <p>© 2025 Fernando Tricas García</p>
+            </div>
+
+            <div class="lang-es">
+                <p>Desarrollado con ❤️ usando <a href="https://cursor.sh/">Cursor</a> y <a href="https://developers.google.com/gemini">Google Gemini AI</a></p>
+                <p>Licenciado bajo <a href="https://github.com/fernand0/news_manager/blob/main/LICENSE">MIT License</a></p>
+                <p>© 2025 Fernando Tricas García</p>
+            </div>
         </footer>
     </div>
+
+    <script>
+        function switchLanguage(lang) {
+            // Hide all language content
+            document.querySelectorAll('.lang-en, .lang-es').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Show selected language content
+            document.querySelectorAll('.lang-' + lang).forEach(el => {
+                el.classList.add('active');
+            });
+            
+            // Update button states
+            document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+            document.getElementById('btn-es').classList.toggle('active', lang === 'es');
+            
+            // Update HTML lang attribute
+            document.documentElement.lang = lang === 'es' ? 'es' : 'en';
+        }
+
+        // Set initial language based on browser preference
+        document.addEventListener('DOMContentLoaded', function() {
+            const browserLang = navigator.language || navigator.userLanguage;
+            if (browserLang.startsWith('es')) {
+                switchLanguage('es');
+            }
+        });
+    </script>
 </body>
 </html> 

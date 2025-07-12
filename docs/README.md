@@ -1,106 +1,110 @@
-# News Manager - Documentación Web
+# News Manager - Web Documentation
 
-Este directorio contiene la documentación web del proyecto News Manager, diseñada para ser alojada en GitHub Pages.
+This directory contains the web documentation for the News Manager project, designed to be hosted on GitHub Pages.
 
-## Estructura
+## Structure
 
-- `index.html` - Página principal con diseño moderno y responsive
-- `_config.yml` - Configuración de Jekyll para GitHub Pages
+- `index.html` - Main page with modern, responsive design and bilingual support
+- `_config.yml` - Jekyll configuration for GitHub Pages
 
-## Características de la Página Web
+## Website Features
 
-### 🎨 Diseño Moderno
-- **Responsive**: Se adapta a todos los dispositivos
-- **Gradientes**: Diseño atractivo con gradientes modernos
-- **Animaciones**: Efectos hover y transiciones suaves
-- **Tipografía**: Fuentes legibles y profesionales
+### 🌍 Bilingual Support
+- **Language Toggle**: Switch between English and Spanish with a click
+- **Automatic Detection**: Detects browser language preference
+- **Complete Translation**: All content available in both languages
+- **SEO Optimized**: Proper language attributes and meta tags
 
-### 📱 Optimización SEO
-- **Meta tags**: Descripción, keywords y Open Graph
-- **Estructura semántica**: HTML5 con elementos semánticos
-- **Performance**: CSS optimizado y carga rápida
+### 🎨 Modern Design
+- **Responsive**: Adapts to all devices
+- **Gradients**: Attractive design with modern gradients
+- **Animations**: Smooth hover effects and transitions
+- **Typography**: Readable and professional fonts
 
-### 🚀 Contenido Destacado
-- **Características principales**: 6 tarjetas con funcionalidades clave
-- **Instalación rápida**: Comandos paso a paso
-- **Ejemplos de uso**: 4 ejemplos prácticos
-- **Demo de salida**: Ejemplo real de la salida del CLI
-- **Stack tecnológico**: Badges con las tecnologías utilizadas
+### 📱 SEO Optimization
+- **Meta tags**: Description, keywords and Open Graph
+- **Semantic structure**: HTML5 with semantic elements
+- **Performance**: Optimized CSS and fast loading
 
-### 🔗 Enlaces Importantes
-- **GitHub**: Enlace directo al repositorio
-- **Cursor**: Menciona el editor usado para desarrollo
-- **Gemini AI**: Referencia a la IA utilizada
-- **MIT License**: Enlace a la licencia
+### 🚀 Featured Content
+- **Key features**: 6 cards with core functionalities
+- **Quick installation**: Step-by-step commands
+- **Usage examples**: 4 practical examples
+- **Output demo**: Real example of CLI output
+- **Tech stack**: Badges with technologies used
 
-## Configuración para GitHub Pages
+### 🔗 Important Links
+- **GitHub**: Direct link to repository
+- **Cursor**: Mentions the editor used for development
+- **Gemini AI**: Reference to the AI used
+- **MIT License**: Link to license
 
-### 1. Habilitar GitHub Pages
-1. Ve a Settings > Pages en el repositorio
-2. Selecciona "Deploy from a branch"
-3. Elige la rama `main` y la carpeta `/docs`
-4. Guarda la configuración
+## GitHub Pages Configuration
 
-### 2. URL de la Página
-La página estará disponible en:
+### 1. Enable GitHub Pages
+1. Go to Settings > Pages in the repository
+2. Select "Deploy from a branch"
+3. Choose the `main` branch and `/docs` folder
+4. Save the configuration
+
+### 2. Page URL
+The page will be available at:
 ```
 https://fernand0.github.io/news_manager/
 ```
 
-### 3. Personalización
-- **Colores**: Modifica los gradientes en el CSS
-- **Contenido**: Actualiza el HTML según necesidades
-- **Imágenes**: Añade logos o screenshots del proyecto
+### 3. Customization
+- **Colors**: Modify gradients in CSS
+- **Content**: Update HTML as needed
+- **Images**: Add logos or project screenshots
 
-## Tecnologías Utilizadas
+## Technologies Used
 
-- **HTML5**: Estructura semántica
-- **CSS3**: Gradientes, flexbox, grid, animaciones
-- **Jekyll**: Generador de sitios estáticos (opcional)
-- **GitHub Pages**: Hosting gratuito
+- **HTML5**: Semantic structure
+- **CSS3**: Gradients, flexbox, grid, animations
+- **JavaScript**: Language switching functionality
+- **Jekyll**: Static site generator (optional)
 
-## Mantenimiento
+## Bilingual Features
 
-### Actualizar Contenido
-1. Modifica `index.html` con nuevos ejemplos o características
-2. Actualiza `_config.yml` si cambias la configuración
-3. Haz commit y push a la rama main
-4. GitHub Pages se actualizará automáticamente
+### Language Switching
+- **Toggle Button**: Fixed position in top-right corner
+- **Smooth Transitions**: Instant language switching
+- **State Management**: Active button highlighting
+- **Mobile Responsive**: Adapts to mobile layout
 
-### Añadir Nuevas Secciones
-1. Crea nuevas secciones en `index.html`
-2. Mantén el estilo consistente con las clases CSS existentes
-3. Asegúrate de que sea responsive
+### Content Structure
+- **Dual Content**: All sections have both language versions
+- **Consistent Layout**: Same design in both languages
+- **Proper Attributes**: HTML lang attribute updates
+- **Accessibility**: Screen reader friendly
 
-### Optimización
-- **Imágenes**: Usa formatos WebP o SVG cuando sea posible
-- **CSS**: Minimiza el CSS para mejor performance
-- **SEO**: Actualiza meta tags según el contenido
+### SEO Benefits
+- **Language Detection**: Browser preference detection
+- **Meta Tags**: Proper language meta tags
+- **Content Duplication**: No duplicate content issues
+- **International Reach**: Appeals to global audience
 
-## Estructura del CSS
+## Development Notes
 
-### Clases Principales
-- `.header` - Encabezado con gradiente
-- `.feature-card` - Tarjetas de características
-- `.code-block` - Bloques de código
-- `.btn` - Botones con efectos hover
-- `.tech-stack` - Stack tecnológico
+### Adding New Content
+When adding new sections:
 
-### Responsive Design
-- **Mobile-first**: Diseño optimizado para móviles
-- **Breakpoints**: Adaptación a tablets y desktop
-- **Flexbox/Grid**: Layout moderno y flexible
+1. **Create dual versions**: Add both `.lang-en` and `.lang-es` divs
+2. **Maintain structure**: Keep same HTML structure for both
+3. **Update JavaScript**: Ensure new content is included in language switching
+4. **Test both languages**: Verify content in both English and Spanish
 
-## Contribuir
+### Translation Guidelines
+- **Consistent terminology**: Use same terms across languages
+- **Cultural adaptation**: Adapt examples to target audience
+- **Technical terms**: Keep technical terms consistent
+- **Tone**: Maintain professional tone in both languages
 
-Para mejorar la página web:
+## Future Enhancements
 
-1. **Fork** el repositorio
-2. **Modifica** los archivos en `/docs`
-3. **Testea** localmente si es posible
-4. **Commit** y **push** tus cambios
-5. **Crea** un Pull Request
-
-## Licencia
-
-La página web está bajo la misma licencia MIT que el proyecto principal. 
+Potential improvements:
+- **More languages**: Add support for additional languages
+- **Language persistence**: Remember user's language choice
+- **Dynamic content**: Load translations dynamically
+- **RTL support**: Add support for right-to-left languages 
