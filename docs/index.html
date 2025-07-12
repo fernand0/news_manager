@@ -29,15 +29,15 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.7;
+            color: #2c3e50;
+            background: #f8f9fa;
             min-height: 100vh;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -45,19 +45,23 @@
         .header {
             text-align: center;
             padding: 60px 0;
-            color: white;
+            background: #ffffff;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
         .header h1 {
-            font-size: 3.5rem;
+            font-size: 3rem;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            color: #2c3e50;
+            font-weight: normal;
         }
 
         .header p {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             margin-bottom: 30px;
-            opacity: 0.9;
+            color: #5a6c7d;
         }
 
         .cta-buttons {
@@ -68,91 +72,104 @@
         }
 
         .btn {
-            padding: 15px 30px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: 600;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
             text-decoration: none;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             cursor: pointer;
             display: inline-block;
         }
 
         .btn-primary {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            background: #34495e;
             color: white;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+            background: #2c3e50;
+            transform: translateY(-1px);
         }
 
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: #ecf0f1;
+            color: #2c3e50;
+            border: 1px solid #bdc3c7;
         }
 
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
+            background: #d5dbdb;
+            transform: translateY(-1px);
         }
 
         .main-content {
             background: white;
-            border-radius: 20px;
+            border-radius: 8px;
             padding: 40px;
             margin: 40px 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .main-content h2 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            font-weight: normal;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
         }
 
         .features {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
+            gap: 25px;
             margin: 40px 0;
         }
 
         .feature-card {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
+            background: #f8f9fa;
+            color: #2c3e50;
+            padding: 25px;
+            border-radius: 6px;
+            border-left: 4px solid #34495e;
+            transition: transform 0.2s ease;
         }
 
         .feature-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .feature-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            color: #34495e;
         }
 
         .feature-card p {
-            opacity: 0.9;
+            color: #5a6c7d;
+            line-height: 1.6;
         }
 
         .demo-section {
             background: #f8f9fa;
-            border-radius: 15px;
-            padding: 30px;
+            border-radius: 6px;
+            padding: 25px;
             margin: 30px 0;
+            border: 1px solid #ecf0f1;
         }
 
         .code-block {
-            background: #2d3748;
-            color: #e2e8f0;
+            background: #2c3e50;
+            color: #ecf0f1;
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 4px;
             overflow-x: auto;
-            font-family: 'Courier New', monospace;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             margin: 20px 0;
+            font-size: 0.9rem;
         }
 
         .code-block pre {
@@ -160,11 +177,16 @@
         }
 
         .installation {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            background: #34495e;
             color: white;
             padding: 30px;
-            border-radius: 15px;
+            border-radius: 6px;
             margin: 30px 0;
+        }
+
+        .installation h2 {
+            color: white;
+            border-bottom: 2px solid #5a6c7d;
         }
 
         .usage-examples {
@@ -176,47 +198,73 @@
 
         .example-card {
             background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
+            border: 1px solid #ecf0f1;
+            border-radius: 6px;
             padding: 20px;
-            transition: border-color 0.3s ease;
+            transition: border-color 0.2s ease;
         }
 
         .example-card:hover {
-            border-color: #667eea;
+            border-color: #34495e;
         }
 
         .example-card h4 {
-            color: #667eea;
-            margin-bottom: 10px;
+            color: #34495e;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
         }
 
         .footer {
             text-align: center;
             padding: 40px 0;
-            color: white;
-            opacity: 0.8;
+            color: #5a6c7d;
+            background: white;
+            border-radius: 8px;
+            margin-top: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .footer a {
+            color: #34495e;
+            text-decoration: underline;
+        }
+
+        .footer a:hover {
+            color: #2c3e50;
         }
 
         .tech-stack {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 15px;
             flex-wrap: wrap;
             margin: 20px 0;
         }
 
         .tech-badge {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            backdrop-filter: blur(10px);
+            background: #ecf0f1;
+            color: #2c3e50;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            border: 1px solid #bdc3c7;
+        }
+
+        ul {
+            color: #5a6c7d;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: #2c3e50;
         }
 
         @media (max-width: 768px) {
             .header h1 {
-                font-size: 2.5rem;
+                font-size: 2.2rem;
             }
             
             .cta-buttons {
@@ -371,8 +419,8 @@ Bluesky: Innovación en purificación de agua! Los Drs. Ruiz & Martínez (Instit
         </main>
 
         <footer class="footer">
-            <p>Desarrollado con ❤️ usando <a href="https://cursor.sh/" style="color: white;">Cursor</a> y <a href="https://developers.google.com/gemini" style="color: white;">Google Gemini AI</a></p>
-            <p>Licenciado bajo <a href="https://github.com/fernand0/news_manager/blob/main/LICENSE" style="color: white;">MIT License</a></p>
+            <p>Desarrollado con ❤️ usando <a href="https://cursor.sh/">Cursor</a> y <a href="https://developers.google.com/gemini">Google Gemini AI</a></p>
+            <p>Licenciado bajo <a href="https://github.com/fernand0/news_manager/blob/main/LICENSE">MIT License</a></p>
             <p>© 2025 Fernando Tricas García</p>
         </footer>
     </div>
