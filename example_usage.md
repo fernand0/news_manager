@@ -94,6 +94,80 @@ news-manager generate --help
 news-manager --help
 ```
 
+## 🎯 **Nueva Funcionalidad: Instrucciones Personalizadas**
+
+### 8. **Uso de `--prompt-extra`**
+
+La opción `--prompt-extra` te permite añadir instrucciones específicas para personalizar la generación de noticias:
+
+```bash
+# Centrarse en una persona específica
+news-manager generate --url "https://ejemplo.com/noticia" --prompt-extra "céntrate en María Santos e ignora el resto"
+
+# Enfocar en un aspecto particular
+news-manager generate -i noticia.txt --prompt-extra "enfócate solo en los aspectos tecnológicos"
+
+# Cambiar el tono de la noticia
+news-manager generate --url "https://ejemplo.com" --prompt-extra "usa un tono más formal y académico"
+
+# Enfatizar ciertos elementos
+news-manager generate -i noticia.txt --prompt-extra "destaca especialmente los logros y premios obtenidos"
+
+# Ignorar cierta información
+news-manager generate --url "https://ejemplo.com" --prompt-extra "ignora los detalles técnicos y céntrate en el impacto social"
+
+# Modo interactivo (se te preguntará qué instrucciones quieres)
+news-manager generate --url "https://ejemplo.com" --interactive-prompt
+```
+
+**Ejemplo de sesión interactiva:**
+```bash
+$ news-manager generate --url "https://ejemplo.com" --interactive-prompt
+
+--- Instrucciones adicionales ---
+Ejemplos de instrucciones que puedes usar:
+• 'céntrate en María Santos e ignora el resto'
+• 'enfócate solo en los aspectos tecnológicos'
+• 'usa un tono más formal y académico'
+• 'destaca especialmente los logros y premios obtenidos'
+• 'ignora los detalles técnicos y céntrate en el impacto social'
+• (deja vacío para no añadir instrucciones)
+
+¿Qué instrucciones adicionales quieres añadir?: céntrate en los aspectos de investigación
+```
+
+### 9. **Casos de Uso Avanzados con `--prompt-extra`**
+
+```bash
+# Para noticias de investigación
+news-manager generate --url "https://universidad.com/investigacion" --prompt-extra "enfócate en la metodología y los resultados principales"
+
+# Para noticias de empresas
+news-manager generate -i noticia_empresa.txt --prompt-extra "destaca el impacto económico y las oportunidades de empleo"
+
+# Para noticias de tecnología
+news-manager generate --url "https://tech.com/nueva-app" --prompt-extra "explica las ventajas para el usuario final de forma clara"
+
+# Para noticias de salud
+news-manager generate -i noticia_salud.txt --prompt-extra "enfócate en los beneficios para la salud pública y la prevención"
+```
+
+### 10. **Combinación de Opciones**
+
+```bash
+# URL + instrucciones personalizadas
+news-manager generate --url "https://i3a.unizar.es/noticia" --prompt-extra "céntrate en los investigadores jóvenes y sus logros"
+
+# Archivo + instrucciones personalizadas
+news-manager generate -i ./noticia_local.txt --prompt-extra "usa un tono más cercano y local"
+
+# URL + modo interactivo
+news-manager generate --url "https://i3a.unizar.es/noticia" --interactive-prompt
+
+# Ver todas las opciones disponibles
+news-manager generate --help
+```
+
 ## 🔧 **Ventajas de las Mejoras**
 
 ✅ **Flexibilidad**: Puedes usar archivos en cualquier ubicación  
@@ -101,4 +175,8 @@ news-manager --help
 ✅ **Validación**: Verifica que el archivo existe y es legible  
 ✅ **Manejo de errores**: Mensajes claros y útiles  
 ✅ **Compatibilidad**: Mantiene el comportamiento original  
-✅ **UTF-8**: Soporte completo para caracteres especiales 
+✅ **UTF-8**: Soporte completo para caracteres especiales  
+✅ **Personalización**: Instrucciones adicionales con `--prompt-extra`  
+✅ **Modo interactivo**: `--interactive-prompt` para instrucciones dinámicas  
+✅ **Extracción inteligente**: Descarga y parsing automático de URLs  
+✅ **Exclusividad**: Opciones claras y sin conflictos
