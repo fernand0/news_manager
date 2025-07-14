@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+import sys
+from runpy import run_module
+
+if __name__ == "__main__":
+    sys.argv[0] = "news_manager"
+    run_module("news_manager", run_name="__main__") 
