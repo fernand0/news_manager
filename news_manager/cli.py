@@ -11,7 +11,7 @@ import unicodedata
 import requests
 from bs4 import BeautifulSoup
 
-from utils_base import setup_logging
+from .utils_base import setup_logging
 
 # Load environment variables from .env file
 load_dotenv()
@@ -275,57 +275,81 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
         if prompt_extra:
             click.echo(f"--- Instrucciones adicionales: {prompt_extra} ---")
 
-        client = GeminiClient()
-        # Pasar la URL al cliente para que aparezca en los enlaces
-        generated_text = client.generate_news(input_text, prompt_extra, url)
-        click.echo(generated_text)
+        # Si la URL es de diis.unizar.es, solo generamos la entrada de Bluesky
+        solo_bluesky = url and 'diis.unizar.es' in url
+
+        if solo_bluesky:
+            # Generar solo la entrada de Bluesky
+            client = GeminiClient()
+            # El prompt solo pide el texto para Bluesky
+            bluesky_prompt = (
+                'Genera únicamente un post breve (máximo 300 caracteres) para la red social Bluesky, '
+                'con tono neutro e informativo, mencionando a los protagonistas '
+                'y terminando con el enlace a la noticia: ' + url
+            )
+            generated_text = client.generate_news(input_text, bluesky_prompt, url)
+            # Extraer solo el campo bluesky
+            _, _, bluesky, _ = parse_output(generated_text)
+            if bluesky and url:
+                bluesky = bluesky.replace('[enlace a la noticia]', url)
+            output_lines = [f'Bluesky: {bluesky}'] if bluesky else []
+            click.echo('\n'.join(output_lines))
+        else:
+            # Flujo normal: generar solo noticia (sin bluesky)
+            client = GeminiClient()
+            generated_text = client.generate_news(input_text, prompt_extra, url)
+            titulo, texto, bluesky, enlaces = parse_output(generated_text)
+            output_lines = []
+            if titulo:
+                output_lines.append(f'Título: {titulo}')
+            if texto:
+                output_lines.append(f'Texto: {texto}')
+            if enlaces:
+                output_lines.append('Enlaces:')
+                output_lines.extend(enlaces)
+            click.echo('\n'.join(output_lines))
 
         # Determinar directorio de salida
         final_output_dir = None
         if output_dir:
             final_output_dir = output_dir
         else:
-            # Verificar variable de entorno
             env_output_dir = os.getenv('NEWS_OUTPUT_DIR')
             if env_output_dir:
                 final_output_dir = Path(env_output_dir)
 
         # Guardar archivos si se especifica output_dir
         if final_output_dir:
-            titulo, texto, bluesky, enlaces = parse_output(generated_text)
-            if not titulo or not texto:
-                click.echo("No se pudo extraer el título o el texto para guardar el archivo.", err=True)
-                return
-
-            # Extraer nombres de personas del título y texto
-            person_names = extract_person_names(titulo + " " + texto)
-
-            # Calcular siguiente día laborable
             hoy = datetime.now().date()
-            fecha = siguiente_laborable(hoy)
-            fecha_str = fecha.strftime('%Y-%m-%d')
-
-            # Generar slug incluyendo nombres de personas
-            slug = slugify(titulo, max_words=3, person_names=person_names)
-            base_name = f"{fecha_str}-{slug}"
-            final_output_dir.mkdir(parents=True, exist_ok=True)
-
-            # Guardar noticia
-            noticia_path = final_output_dir / f"{base_name}.txt"
-            with open(noticia_path, 'w', encoding='utf-8') as f:
-                f.write(f"Título: {titulo}\n\nTexto: {texto}\n")
-                if enlaces:
-                    f.write(f"\nEnlaces:\n")
-                    for enlace in enlaces:
-                        f.write(f"{enlace}\n")
-            click.echo(f"Noticia guardada en: {noticia_path}")
-
-            # Guardar bluesky
-            if bluesky:
-                blsky_path = final_output_dir / f"{base_name}_blsky.txt"
-                with open(blsky_path, 'w', encoding='utf-8') as f:
-                    f.write(bluesky + '\n')
-                click.echo(f"Bluesky guardado en: {blsky_path}")
+            hoy_str = hoy.strftime('%Y-%m-%d')
+            # Si solo bluesky, no guardar noticia
+            if not solo_bluesky:
+                # Extraer nombres de personas del título y texto
+                if titulo and texto:
+                    person_names = extract_person_names(titulo + " " + texto)
+                else:
+                    person_names = []
+                fecha = siguiente_laborable(hoy)
+                fecha_str = fecha.strftime('%Y-%m-%d')
+                slug = slugify(titulo, max_words=3, person_names=person_names)
+                base_name = f"{fecha_str}-{slug}"
+                final_output_dir.mkdir(parents=True, exist_ok=True)
+                noticia_path = final_output_dir / f"{base_name}.txt"
+                with open(noticia_path, 'w', encoding='utf-8') as f:
+                    f.write(f"Título: {titulo}\n\nTexto: {texto}\n")
+                    if enlaces:
+                        f.write(f"\nEnlaces:\n")
+                        for enlace in enlaces:
+                            f.write(f"{enlace}\n")
+                click.echo(f"Noticia guardada en: {noticia_path}")
+            else:
+                # Solo bluesky, usar input_text para slug
+                slug = slugify(input_text, max_words=3)
+                blsky_path = final_output_dir / f"{hoy_str}-{slug}_blsky.txt"
+                if bluesky:
+                    with open(blsky_path, 'w', encoding='utf-8') as f:
+                        f.write(bluesky + '\n')
+                    click.echo(f"Bluesky guardado en: {blsky_path}")
 
     except (ValueError, RuntimeError) as e:
         click.echo(f"Error: {e}", err=True)
@@ -336,4 +360,4 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
 
 
 if __name__ == '__main__':
-    main()
+    cli()
