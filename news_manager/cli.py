@@ -331,7 +331,26 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
                     person_names = []
                 fecha = siguiente_laborable(hoy)
                 fecha_str = fecha.strftime('%Y-%m-%d')
-                slug = slugify(titulo, max_words=3, person_names=person_names)
+                # Generar slug incluyendo nombres de personas o, si es tesis, nombre y primer apellido
+                if titulo and titulo.startswith('Lectura de Tesis de'):
+                    # Extraer nombre y primer apellido del título
+                    import re
+                    match = re.match(r'Lectura de Tesis de ([A-Za-zÁÉÍÓÚáéíóúüÜñÑ]+) ([A-Za-zÁÉÍÓÚáéíóúüÜñÑ]+)', titulo)
+                    if match:
+                        nombre = match.group(1)
+                        apellido = match.group(2)
+                        slug = f"{nombre.lower()}-{apellido.lower()}"
+                        # Añadir palabras clave del título de la tesis (entre comillas)
+                        titulo_tesis = re.search(r'"([^"]+)"', titulo)
+                        if titulo_tesis:
+                            palabras = unicodedata.normalize('NFKD', titulo_tesis.group(1)).encode('ascii', 'ignore').decode('ascii')
+                            palabras = re.sub(r'[^\w\s-]', '', palabras.lower()).split()
+                            slug += '-' + '-'.join(palabras[:2])
+                    else:
+                        # Fallback a slugify normal si no se puede extraer
+                        slug = slugify(titulo, max_words=3, person_names=person_names)
+                else:
+                    slug = slugify(titulo, max_words=3, person_names=person_names)
                 base_name = f"{fecha_str}-{slug}"
                 final_output_dir.mkdir(parents=True, exist_ok=True)
                 noticia_path = final_output_dir / f"{base_name}.txt"
