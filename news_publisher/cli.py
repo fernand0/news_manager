@@ -4,6 +4,20 @@ from pathlib import Path
 import click
 from configparser import ConfigParser
 from dotenv import load_dotenv
+import tempfile
+import subprocess
+
+def edit_content_in_editor(initial_content):
+    editor = os.environ.get('EDITOR', 'vi')
+    with tempfile.NamedTemporaryFile(suffix='.tmp', mode='w+', delete=False, encoding='utf-8') as tf:
+        tf.write(initial_content)
+        tf.flush()
+        temp_path = tf.name
+    subprocess.call([editor, temp_path])
+    with open(temp_path, 'r', encoding='utf-8') as tf:
+        edited_content = tf.read().strip()
+    os.unlink(temp_path)
+    return edited_content
 
 def publish_bluesky(directory, user):
     load_dotenv()
@@ -20,12 +34,17 @@ def publish_bluesky(directory, user):
     if not content:
         click.echo('El archivo está vacío.', err=True)
         sys.exit(1)
-    click.echo('\n--- Contenido a publicar en Bluesky ---')
-    click.echo(content)
-    click.echo('--------------------------------------')
-    if not click.confirm('¿Quieres publicar este contenido en Bluesky?', default=False):
-        click.echo('Publicación cancelada.')
-        sys.exit(0)
+    while True:
+        click.echo('\n--- Contenido a publicar en Bluesky ---')
+        click.echo(content)
+        click.echo('--------------------------------------')
+        if click.confirm('¿Quieres publicar este contenido en Bluesky?', default=False):
+            break
+        click.echo('Abriendo editor para modificar el contenido...')
+        content = edit_content_in_editor(content)
+        if not content:
+            click.echo('El contenido editado está vacío. Cancelando publicación.')
+            sys.exit(1)
     if not user:
         config_path = os.path.expanduser('~/.mySocial/config/.rssBlsk')
         parser = ConfigParser()
