@@ -228,3 +228,50 @@ The website features:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Publicar en Bluesky
+
+El proyecto incluye un CLI auxiliar para publicar posts en Bluesky a partir de los archivos generados por News Manager.
+
+### Estructura del proyecto
+
+- `news_manager/`: Paquete principal para generación de noticias y CLI principal.
+- `news_publisher/`: Herramientas auxiliares para publicación en Bluesky (CLI propio).
+
+### Configuración
+
+1. **Directorio de búsqueda de posts**
+   - Por defecto, el CLI busca archivos `*_blsky.txt` en el directorio configurado en la variable `BLUESKY_POSTS_DIR` de tu `.env`:
+     ```
+     BLUESKY_POSTS_DIR=/ruta/a/tu/directorio
+     ```
+   - Si no está definida, usará el directorio actual.
+   - Puedes sobrescribirlo con el argumento `--dir`.
+
+2. **Usuario de Bluesky**
+   - Por defecto, se usa el último perfil definido en `~/.mySocial/config/.rssBlsk`.
+   - Puedes sobrescribirlo con el argumento `--user`.
+
+### Uso
+
+Para publicar el último post generado en Bluesky:
+
+```bash
+uv run news_publisher publish
+```
+
+Opciones:
+- `--dir /ruta/a/archivos` para especificar el directorio de búsqueda.
+- `--user tu_usuario_bluesky` para especificar el usuario de Bluesky.
+
+**Ejemplo:**
+```bash
+uv run news_publisher publish --dir /home/usuario/noticias --user miusuario
+```
+
+El CLI mostrará el contenido a publicar y pedirá confirmación antes de enviarlo a Bluesky.
+
+### Requisitos
+- Tener configurado el archivo `.env` con la variable `BLUESKY_POSTS_DIR` si quieres un directorio por defecto.
+- Tener configurado el archivo `~/.mySocial/config/.rssBlsk` con tus credenciales de Bluesky.
+- Las dependencias se gestionan automáticamente desde `pyproject.toml`.

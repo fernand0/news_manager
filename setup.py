@@ -20,7 +20,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'news-manager = news_manager.cli:main',
+            'news-manager = news_manager.cli:cli',
+            'news_publisher = news_publisher.cli:cli',
         ],
     },
     classifiers=[

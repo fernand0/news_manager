@@ -12,6 +12,7 @@ dependencies = [
     "python-dotenv",
     "requests",
     "beautifulsoup4",
+    "social-modules @ git+https://github.com/fernand0/socialModules.git",
 ]
 
 [project.optional-dependencies]
@@ -26,3 +27,6 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 dev-dependencies = ["pytest"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
