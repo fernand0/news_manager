@@ -165,6 +165,25 @@ Generates a news story by sending the content of an input file or a URL to the G
    # Los archivos se guardarán automáticamente en /home/usuario/noticias
    ```
 
+### Formato especial para tesis
+
+Cuando la noticia generada corresponde a una tesis doctoral, el sistema produce:
+- **Título:** De la forma `Lectura de Tesis de [nombre] [primer apellido], "[título de la tesis]"`.
+- **Slug/URL:** El archivo generado incluirá el nombre y primer apellido del autor, seguido de palabras clave del título de la tesis.
+
+**Ejemplo:**
+
+- Título generado:
+  ```
+  Lectura de Tesis de Razvan Raducu, "Behavior Analysis for Vulnerability and Malware Detection"
+  ```
+- Archivo generado:
+  ```
+  2025-07-15-razvan-raducu-behavior-analysis.txt
+  ```
+
+Esto facilita la identificación y el acceso a las noticias de tesis, y mejora la legibilidad de los archivos y URLs.
+
 **Opciones avanzadas:**
 ```bash
 # Ver ayuda del comando
@@ -275,3 +294,5 @@ El CLI mostrará el contenido a publicar y pedirá confirmación antes de enviar
 - Tener configurado el archivo `.env` con la variable `BLUESKY_POSTS_DIR` si quieres un directorio por defecto.
 - Tener configurado el archivo `~/.mySocial/config/.rssBlsk` con tus credenciales de Bluesky.
 - Las dependencias se gestionan automáticamente desde `pyproject.toml`.
+
+Para convenciones específicas sobre el formato de títulos, slugs y reglas especiales (por ejemplo, para tesis doctorales), consulta el archivo [CONVENCIONES.md](CONVENCIONES.md).
