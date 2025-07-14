@@ -11,8 +11,11 @@ import unicodedata
 import requests
 from bs4 import BeautifulSoup
 
+from utils_base import setup_logging
+
 # Load environment variables from .env file
 load_dotenv()
+
 
 def extract_main_text_from_url(url):
     """
@@ -64,7 +67,7 @@ def extract_person_names(text):
         r'\b([A-Z][a-z]+)\s+([A-Z][a-z]+)\b',
         r'\b(?:el|la)\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)\b'
     ]
-    
+
     names = set()
     for pattern in patterns:
         matches = re.findall(pattern, text)
@@ -76,7 +79,7 @@ def extract_person_names(text):
             else:
                 if len(match) > 2:
                     names.add(match.strip())
-    
+
     return list(names)
 
 def slugify(text, max_words=4, person_names=None):
@@ -84,7 +87,7 @@ def slugify(text, max_words=4, person_names=None):
     text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
     text = re.sub(r'[^\w\s-]', '', text.lower())
     words = text.split()
-    
+
     # Si hay nombres de personas, incluirlos al principio
     if person_names:
         name_slug = '-'.join(person_names[:2])  # Máximo 2 nombres
@@ -100,12 +103,12 @@ def parse_output(generated_text):
     lines = generated_text.splitlines()
     buffer = []
     mode = None
-    
+
     for line in lines:
         line = line.strip()
         if not line:  # Skip empty lines
             continue
-            
+
         if line.startswith('Título:'):
             titulo = line.replace('Título:', '').strip()
             mode = None
@@ -126,20 +129,28 @@ def parse_output(generated_text):
             buffer.append(line)
         elif mode == 'enlaces' and line.startswith('-'):
             enlaces.append(line)
-    
+
     if buffer:
         texto = '\n'.join(buffer).strip()
-    
+
     return titulo, texto, bluesky, enlaces
 
 @click.group()
-def main():
+@click.version_option()
+def cli():
     """
     A simple CLI to manage news.
     """
-    pass
+    setup_logging()
 
-@main.command()
+# @click.group()
+# def main():
+#     """
+#     A simple CLI to manage news.
+#     """
+#     pass
+
+@cli.command()
 @click.option(
     '--input-file', '-i',
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
@@ -173,17 +184,17 @@ def main():
 def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
     """
     Genera una noticia a partir de un archivo o una URL (opciones exclusivas).
-    
+
     El archivo de entrada se puede especificar de tres formas:
     1. Con el parámetro --input-file
     2. Con la variable de entorno NEWS_INPUT_FILE
     3. Por defecto usa /tmp/noticia.txt
     O bien, se puede usar --url para descargar una noticia de internet.
-    
+
     El directorio de salida se puede especificar de dos formas:
     1. Con el parámetro --output-dir
     2. Con la variable de entorno NEWS_OUTPUT_DIR
-    
+
     Puedes usar --prompt-extra para añadir instrucciones personalizadas.
     Usa --interactive-prompt para activar el modo interactivo.
     """
@@ -192,7 +203,7 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
         if input_file and url:
             click.echo("Error: No puedes usar --input-file y --url al mismo tiempo. Elige solo una opción.", err=True)
             return
-        
+
         if url:
             click.echo(f"--- Descargando y extrayendo noticia de: {url} ---")
             try:
@@ -215,17 +226,17 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
                     file_path = Path(env_file)
                 else:
                     file_path = Path('/tmp/noticia.txt')
-            
+
             # Validate file exists and is readable
             if not file_path.exists():
                 click.echo(f"Error: El archivo no existe: {file_path}", err=True)
                 click.echo(f"Sugerencia: Crea el archivo con tu texto fuente o especifica otro archivo con --input-file", err=True)
                 return
-            
+
             if not file_path.is_file():
                 click.echo(f"Error: La ruta especificada no es un archivo: {file_path}", err=True)
                 return
-            
+
             # Read the input file
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
@@ -233,13 +244,13 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
             except UnicodeDecodeError:
                 click.echo(f"Error: No se puede leer el archivo {file_path}. Verifica que sea un archivo de texto válido.", err=True)
                 return
-            
+
             if not input_text:
                 click.echo(f"Error: El archivo {file_path} está vacío.", err=True)
                 return
 
             click.echo(f"--- Leyendo archivo: {file_path} ---")
-        
+
         # Manejar prompt_extra interactivamente si se activa el modo interactivo
         if interactive_prompt:
             click.echo("\n--- Instrucciones adicionales ---")
@@ -251,19 +262,19 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
             click.echo("• 'ignora los detalles técnicos y céntrate en el impacto social'")
             click.echo("• (deja vacío para no añadir instrucciones)")
             click.echo()
-            
+
             prompt_extra = click.prompt(
                 "¿Qué instrucciones adicionales quieres añadir?",
                 default="",
                 type=str
             ).strip()
-        
+
         click.echo(f"--- Inicializando cliente AI y generando noticia... ---")
-        
+
         # Mostrar instrucciones adicionales si se proporcionan
         if prompt_extra:
             click.echo(f"--- Instrucciones adicionales: {prompt_extra} ---")
-        
+
         client = GeminiClient()
         # Pasar la URL al cliente para que aparezca en los enlaces
         generated_text = client.generate_news(input_text, prompt_extra, url)
@@ -278,27 +289,27 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
             env_output_dir = os.getenv('NEWS_OUTPUT_DIR')
             if env_output_dir:
                 final_output_dir = Path(env_output_dir)
-        
+
         # Guardar archivos si se especifica output_dir
         if final_output_dir:
             titulo, texto, bluesky, enlaces = parse_output(generated_text)
             if not titulo or not texto:
                 click.echo("No se pudo extraer el título o el texto para guardar el archivo.", err=True)
                 return
-            
+
             # Extraer nombres de personas del título y texto
             person_names = extract_person_names(titulo + " " + texto)
-            
+
             # Calcular siguiente día laborable
             hoy = datetime.now().date()
             fecha = siguiente_laborable(hoy)
             fecha_str = fecha.strftime('%Y-%m-%d')
-            
+
             # Generar slug incluyendo nombres de personas
             slug = slugify(titulo, max_words=3, person_names=person_names)
             base_name = f"{fecha_str}-{slug}"
             final_output_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Guardar noticia
             noticia_path = final_output_dir / f"{base_name}.txt"
             with open(noticia_path, 'w', encoding='utf-8') as f:
@@ -308,7 +319,7 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
                     for enlace in enlaces:
                         f.write(f"{enlace}\n")
             click.echo(f"Noticia guardada en: {noticia_path}")
-            
+
             # Guardar bluesky
             if bluesky:
                 blsky_path = final_output_dir / f"{base_name}_blsky.txt"
