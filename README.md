@@ -165,7 +165,9 @@ Generates a news story by sending the content of an input file or a URL to the G
    # Los archivos se guardarán automáticamente en /home/usuario/noticias
    ```
 
-### Formato especial para tesis
+### Formatos especiales
+
+El sistema puede aplicar formatos especiales a las noticias generadas según el tipo de contenido. Por ejemplo, para tesis doctorales:
 
 Cuando la noticia generada corresponde a una tesis doctoral, el sistema produce:
 - **Título:** De la forma `Lectura de Tesis de [nombre] [primer apellido], "[título de la tesis]"`.
@@ -183,6 +185,8 @@ Cuando la noticia generada corresponde a una tesis doctoral, el sistema produce:
   ```
 
 Esto facilita la identificación y el acceso a las noticias de tesis, y mejora la legibilidad de los archivos y URLs.
+
+> **TODO:** Próximamente se incluirán formatos especiales para seminarios y otros tipos de eventos o noticias.
 
 **Opciones avanzadas:**
 ```bash
