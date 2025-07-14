@@ -177,11 +177,11 @@ Cuando la noticia generada corresponde a una tesis doctoral, el sistema produce:
 
 - Título generado:
   ```
-  Lectura de Tesis de Razvan Raducu, "Behavior Analysis for Vulnerability and Malware Detection"
+  Lectura de Tesis de Nombre Apellido, "Título de la tesis ficticia"
   ```
 - Archivo generado:
   ```
-  2025-07-15-razvan-raducu-behavior-analysis.txt
+  2025-07-15-nombre-apellido-titulo-tesis.txt
   ```
 
 Esto facilita la identificación y el acceso a las noticias de tesis, y mejora la legibilidad de los archivos y URLs.
