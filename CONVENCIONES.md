@@ -2,7 +2,7 @@
 
 Este documento recoge las convenciones y reglas específicas aplicadas en la generación de noticias y archivos por este proyecto.
 
-## Formato especial para tesis
+## Formatos especiales
 
 Cuando la noticia generada corresponde a una tesis doctoral, el sistema produce:
 
