@@ -72,23 +72,9 @@ uv venv
 source .venv/bin/activate
 ```
 
-### 2. Install Dependencies
+### 2. Install the CLI and Dependencies
 
-Install the required packages, including the Gemini API client.
-
-**Using `pip`:**
-```bash
-pip install -r requirements.txt
-```
-
-**Using `uv`:**
-```bash
-uv pip install -r requirements.txt
-```
-
-### 3. Install the CLI
-
-Install the project in "editable" mode.
+Install the project in "editable" mode, which also installs all the necessary dependencies defined in `pyproject.toml`.
 
 **Using `pip`:**
 ```bash
@@ -273,10 +259,16 @@ El proyecto incluye un CLI auxiliar para publicar posts en Bluesky a partir de l
 
 ### Uso
 
-Para publicar el último post generado en Bluesky:
+Para publicar el último post generado en Bluesky, puedes usar `uv run` o ejecutar el módulo directamente:
 
+**Usando `uv run`:**
 ```bash
 uv run news_publisher publish
+```
+
+**Ejecutando el módulo:**
+```bash
+python -m news_publisher publish
 ```
 
 Opciones:

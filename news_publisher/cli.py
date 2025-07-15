@@ -6,6 +6,7 @@ from configparser import ConfigParser
 from dotenv import load_dotenv
 import tempfile
 import subprocess
+import re
 
 def edit_content_in_editor(initial_content):
     editor = os.environ.get('EDITOR', 'vi')
@@ -45,6 +46,14 @@ def publish_bluesky(directory, user):
         if not content:
             click.echo('El contenido editado está vacío. Cancelando publicación.')
             sys.exit(1)
+
+    urls = re.findall(r'https?://\S+', content)
+    link = ""
+    text = content
+    if urls:
+        link = urls[-1]
+        text = content.replace(link, '').strip()
+
     if not user:
         config_path = os.path.expanduser('~/.mySocial/config/.rssBlsk')
         parser = ConfigParser()
@@ -60,7 +69,7 @@ def publish_bluesky(directory, user):
         click.echo('No se pudo importar socialModules. ¿Está instalado y en el PYTHONPATH?', err=True)
         sys.exit(1)
     api = getApi('Blsk', user)
-    result = api.publishPost(content)
+    result = api.publishPost(text, link, "")
     click.echo(f'Respuesta de publicación: {result}')
 
 @click.group()
