@@ -54,14 +54,16 @@ def main(directory, user):
 
     # Importar y usar social-modules
     try:
+        import socialModules
         from socialModules.configMod import getApi
     except ImportError:
         click.echo('No se pudo importar socialModules. ¿Está instalado y en el PYTHONPATH?', err=True)
         sys.exit(1)
 
     api = getApi('Bluesky', user)
-    result = api.publishPost(content)
+    print(f"Api: {api}")
+    result = api.publishPost(content,"", "")
     click.echo(f'Respuesta de publicación: {result}')
 
 if __name__ == '__main__':
-    main() 
+    main()

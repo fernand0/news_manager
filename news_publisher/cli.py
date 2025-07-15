@@ -59,7 +59,7 @@ def publish_bluesky(directory, user):
     except ImportError:
         click.echo('No se pudo importar socialModules. ¿Está instalado y en el PYTHONPATH?', err=True)
         sys.exit(1)
-    api = getApi('Bluesky', user)
+    api = getApi('Blsk', user)
     result = api.publishPost(content)
     click.echo(f'Respuesta de publicación: {result}')
 
@@ -73,7 +73,21 @@ def cli():
 @click.option('--user', default=None, help='Usuario de Bluesky (si no se indica, se toma el último del fichero de configuración)')
 def publish(directory, user):
     """Publica el último archivo *_blsky.txt en Bluesky usando social-modules."""
+    print(f"Setting logging")
+    LOGDIR=""
+    if not LOGDIR:
+        logFile = f"/tmp/news_publisher.log"
+    else:
+        logFile = f"{LOGDIR}/news_publisher.log"
+
+    import logging
+    logging.basicConfig(
+        filename = logFile,
+        # stream=sys.stdout,
+        level=logging.DEBUG,
+        format="%(asctime)s %(levelname)s: %(message)s",
+    )
     publish_bluesky(directory, user)
 
 if __name__ == '__main__':
-    cli() 
+    cli()
