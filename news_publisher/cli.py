@@ -1,12 +1,11 @@
 import os
-import sys
 from pathlib import Path
 import click
 from configparser import ConfigParser
 from dotenv import load_dotenv
-import tempfile
 import subprocess
 import re
+from news_manager.utils_base import setup_logging
 
 def edit_content_in_editor(initial_content):
     editor = os.environ.get('EDITOR', 'vi')
@@ -75,27 +74,14 @@ def publish_bluesky(directory, user):
 @click.group()
 def cli():
     """Herramientas para publicación en Bluesky"""
-    pass
+    setup_logging()
 
 @cli.command()
 @click.option('--dir', 'directory', default=None, help='Directorio donde buscar archivos *_blsky.txt (por defecto: BLUESKY_POSTS_DIR en .env o el actual)')
 @click.option('--user', default=None, help='Usuario de Bluesky (si no se indica, se toma el último del fichero de configuración)')
 def publish(directory, user):
     """Publica el último archivo *_blsky.txt en Bluesky usando social-modules."""
-    print(f"Setting logging")
-    LOGDIR=""
-    if not LOGDIR:
-        logFile = f"/tmp/news_publisher.log"
-    else:
-        logFile = f"{LOGDIR}/news_publisher.log"
-
-    import logging
-    logging.basicConfig(
-        filename = logFile,
-        # stream=sys.stdout,
-        level=logging.DEBUG,
-        format="%(asctime)s %(levelname)s: %(message)s",
-    )
+    
     publish_bluesky(directory, user)
 
 if __name__ == '__main__':

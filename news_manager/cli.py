@@ -143,12 +143,7 @@ def cli():
     """
     setup_logging()
 
-# @click.group()
-# def main():
-#     """
-#     A simple CLI to manage news.
-#     """
-#     pass
+
 
 @cli.command()
 @click.option(
@@ -284,7 +279,11 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
             # El prompt solo pide el texto para Bluesky
             bluesky_prompt = (
                 'Genera únicamente un post breve (máximo 300 caracteres) para la red social Bluesky, '
-                'con tono neutro e informativo, mencionando a los protagonistas '
+                'con tono neutro e informativo, mencionando a los protagonistas solo con un apellido, '
+                'la fecha (puedes abreviarla en forma dd/mm hh; si es una hora en punto no hace falta '
+                'que pongas el :00)) y el lugar (por ejemplo, seminario abc en xyz) '
+                'si es una tesis sigue el esquema: "Lectura de Tesis de [Nombre] [Apellido], [dd]/[m] [hh]h, '
+                '[local] tendrá lugar la defensa de la tesis "[Titulo]" '
                 'y terminando con el enlace a la noticia: ' + url
             )
             generated_text = client.generate_news(input_text, bluesky_prompt, url)
