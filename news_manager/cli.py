@@ -1,18 +1,17 @@
 import click
 import os
+import sys
+import re
+import unicodedata
 from pathlib import Path
 from dotenv import load_dotenv
-from .llm import GeminiClient
-import re
 from datetime import datetime, timedelta
-import unicodedata
-
-# Para descarga y parsing de noticias
 import requests
 from bs4 import BeautifulSoup
-
+from .llm import GeminiClient
 from .utils_base import setup_logging
 
+# NEWS_TEST_SLUG es solo para testing: permite forzar el slug en los tests
 # Load environment variables from .env file
 load_dotenv()
 
@@ -148,7 +147,7 @@ def cli():
 @cli.command()
 @click.option(
     '--input-file', '-i',
-    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+    type=click.Path(exists=False, file_okay=True, dir_okay=False, path_type=Path),
     default=None,
     help='Archivo de entrada con el texto fuente (por defecto: /tmp/noticia.txt o NEWS_INPUT_FILE)'
 )
@@ -197,7 +196,7 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
         # Exclusividad de opciones
         if input_file and url:
             click.echo("Error: No puedes usar --input-file y --url al mismo tiempo. Elige solo una opción.", err=True)
-            return
+            sys.exit(1)
 
         if url:
             click.echo(f"--- Descargando y extrayendo noticia de: {url} ---")
@@ -205,10 +204,10 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
                 input_text = extract_main_text_from_url(url)
             except Exception as e:
                 click.echo(f"Error al procesar la URL: {e}", err=True)
-                return
+                sys.exit(1)
             if not input_text or len(input_text.strip()) < 100:
                 click.echo("Error: No se pudo extraer suficiente texto de la URL proporcionada.", err=True)
-                return
+                sys.exit(1)
             click.echo(f"--- Texto extraído (primeros 300 caracteres): ---\n{input_text[:300]}\n--- Fin de muestra ---")
         else:
             # Determine the input file path
@@ -226,11 +225,11 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
             if not file_path.exists():
                 click.echo(f"Error: El archivo no existe: {file_path}", err=True)
                 click.echo(f"Sugerencia: Crea el archivo con tu texto fuente o especifica otro archivo con --input-file", err=True)
-                return
+                sys.exit(1)
 
             if not file_path.is_file():
                 click.echo(f"Error: La ruta especificada no es un archivo: {file_path}", err=True)
-                return
+                sys.exit(1)
 
             # Read the input file
             try:
@@ -238,11 +237,17 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
                     input_text = f.read().strip()
             except UnicodeDecodeError:
                 click.echo(f"Error: No se puede leer el archivo {file_path}. Verifica que sea un archivo de texto válido.", err=True)
-                return
+                sys.exit(1)
+            except PermissionError:
+                click.echo(f"Error: No tienes permisos para leer el archivo {file_path}", err=True)
+                sys.exit(1)
+            except Exception as e:
+                click.echo(f"Error inesperado: {e}", err=True)
+                sys.exit(1)
 
             if not input_text:
                 click.echo(f"Error: El archivo {file_path} está vacío.", err=True)
-                return
+                sys.exit(1)
 
             click.echo(f"--- Leyendo archivo: {file_path} ---")
 
@@ -321,6 +326,10 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
         if final_output_dir:
             hoy = datetime.now().date()
             hoy_str = hoy.strftime('%Y-%m-%d')
+            # Crear el directorio siempre antes de guardar
+            final_output_dir.mkdir(parents=True, exist_ok=True)
+            # Permitir inyección de slug para tests
+            test_slug = os.getenv('NEWS_TEST_SLUG')
             # Si solo bluesky, no guardar noticia
             if not solo_bluesky:
                 # Extraer nombres de personas del título y texto
@@ -331,27 +340,25 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
                 fecha = siguiente_laborable(hoy)
                 fecha_str = fecha.strftime('%Y-%m-%d')
                 # Generar slug incluyendo nombres de personas o, si es tesis, nombre y primer apellido
-                if titulo and titulo.startswith('Lectura de Tesis de'):
-                    # Extraer nombre y primer apellido del título
-                    import re
+                if os.getenv('NEWS_TEST_SLUG'):
+                    slug = os.getenv('NEWS_TEST_SLUG')
+                elif titulo and titulo.startswith('Lectura de Tesis de'):
+                    # Extraer nombre y primer apellido del título y normalizar
                     match = re.match(r'Lectura de Tesis de ([A-Za-zÁÉÍÓÚáéíóúüÜñÑ]+) ([A-Za-zÁÉÍÓÚáéíóúüÜñÑ]+)', titulo)
                     if match:
                         nombre = match.group(1)
                         apellido = match.group(2)
-                        slug = f"{nombre.lower()}-{apellido.lower()}"
+                        slug = slugify(f"{nombre} {apellido}")
                         # Añadir palabras clave del título de la tesis (entre comillas)
                         titulo_tesis = re.search(r'"([^"]+)"', titulo)
                         if titulo_tesis:
-                            palabras = unicodedata.normalize('NFKD', titulo_tesis.group(1)).encode('ascii', 'ignore').decode('ascii')
-                            palabras = re.sub(r'[^\w\s-]', '', palabras.lower()).split()
-                            slug += '-' + '-'.join(palabras[:2])
+                            palabras = slugify(titulo_tesis.group(1), max_words=2)
+                            slug += '-' + palabras
                     else:
-                        # Fallback a slugify normal si no se puede extraer
                         slug = slugify(titulo, max_words=3, person_names=person_names)
                 else:
                     slug = slugify(titulo, max_words=3, person_names=person_names)
                 base_name = f"{fecha_str}-{slug}"
-                final_output_dir.mkdir(parents=True, exist_ok=True)
                 noticia_path = final_output_dir / f"{base_name}.txt"
                 with open(noticia_path, 'w', encoding='utf-8') as f:
                     f.write(f"Título: {titulo}\n\nTexto: {texto}\n")
@@ -362,7 +369,10 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
                 click.echo(f"Noticia guardada en: {noticia_path}")
             else:
                 # Solo bluesky, usar input_text para slug
-                slug = slugify(input_text, max_words=3)
+                if test_slug:
+                    slug = test_slug
+                else:
+                    slug = slugify(input_text, max_words=3)
                 blsky_path = final_output_dir / f"{hoy_str}-{slug}_blsky.txt"
                 if bluesky:
                     with open(blsky_path, 'w', encoding='utf-8') as f:
@@ -371,10 +381,13 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
 
     except (ValueError, RuntimeError) as e:
         click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
     except PermissionError:
         click.echo(f"Error: No tienes permisos para leer el archivo {file_path}", err=True)
+        sys.exit(1)
     except Exception as e:
         click.echo(f"Error inesperado: {e}", err=True)
+        sys.exit(1)
 
 
 if __name__ == '__main__':

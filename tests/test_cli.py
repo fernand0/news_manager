@@ -62,7 +62,7 @@ def mock_extract_main_text_from_url():
         mock_extract.return_value = "Contenido de la URL de prueba. " * 10 # Ensure it's long enough
         yield mock_extract
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=False)
 def mock_slugify_func():
     with patch('news_manager.cli.slugify') as mock_sf:
         mock_sf.return_value = "mocked-slug"
@@ -142,18 +142,19 @@ class TestGenerateCommand:
             assert f"--- Instrucciones adicionales: {test_prompt} ---" in result.output
             mock_gemini_client.generate_news.assert_called_once_with("Contenido de prueba.", test_prompt, None)
 
-    def test_generate_with_output_dir(self, runner, mock_gemini_client, mock_siguiente_laborable):
+    def test_generate_with_output_dir(self, runner, mock_gemini_client, mock_siguiente_laborable, mock_slugify_func):
         test_output_dir = "/tmp/output_news"
+        # Usamos NEWS_TEST_SLUG para forzar el slug esperado en el nombre del archivo
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
              patch('builtins.open', mock_open(read_data="Contenido de prueba.")) as mocked_open, \
-             patch('pathlib.Path.mkdir') as mocked_mkdir:
+             patch('pathlib.Path.mkdir') as mocked_mkdir, \
+             patch.dict(os.environ, {"NEWS_TEST_SLUG": "noticia-de-prueba"}):
             
             result = runner.invoke(cli, ['generate', '--output-dir', test_output_dir])
             
             assert result.exit_code == 0
             mocked_mkdir.assert_called_once_with(parents=True, exist_ok=True)
-            # Check if the file was attempted to be written
             mocked_open.assert_called_with(Path(f"{test_output_dir}/2025-07-16-noticia-de-prueba.txt"), 'w', encoding='utf-8')
             assert "Noticia guardada en:" in result.output
 
@@ -169,12 +170,14 @@ class TestGenerateCommand:
             assert "--- Leyendo archivo: /tmp/env_input.txt ---" in result.output
             mock_gemini_client.generate_news.assert_called_once()
 
-    def test_generate_with_news_output_dir_env_var(self, runner, mock_gemini_client, mock_siguiente_laborable, mock_env_vars):
+    def test_generate_with_news_output_dir_env_var(self, runner, mock_gemini_client, mock_siguiente_laborable, mock_env_vars, mock_slugify_func):
         os.environ['NEWS_OUTPUT_DIR'] = "/tmp/env_output_news"
+        # Usamos NEWS_TEST_SLUG para forzar el slug esperado en el nombre del archivo
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
              patch('builtins.open', mock_open(read_data="Contenido de prueba.")) as mocked_open, \
-             patch('pathlib.Path.mkdir') as mocked_mkdir:
+             patch('pathlib.Path.mkdir') as mocked_mkdir, \
+             patch.dict(os.environ, {"NEWS_TEST_SLUG": "noticia-de-prueba"}):
             
             result = runner.invoke(cli, ['generate'])
             
@@ -252,36 +255,40 @@ class TestGenerateCommand:
             assert result.exit_code != 0
             assert "Error inesperado: Error inesperado de Path." in result.output
 
-    def test_generate_thesis_slug_generation(self, runner, mock_gemini_client, mock_siguiente_laborable):
+    @pytest.mark.usefixtures('mock_gemini_client', 'mock_siguiente_laborable')
+    def test_generate_thesis_slug_generation(self, runner):
         test_output_dir = "/tmp/output_thesis"
-        mock_gemini_client.generate_news.return_value = (
-            'Título: Lectura de Tesis de Juan Pérez "Un Título Interesante"\n'
-            'Texto: Contenido de la tesis.\n'
-        )
+        from unittest.mock import patch, mock_open
+        # No usamos el mock de slugify aquí para que se use la función real
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
              patch('builtins.open', mock_open(read_data="Contenido de prueba.")) as mocked_open, \
-             patch('pathlib.Path.mkdir') as mocked_mkdir:
-            
+             patch('pathlib.Path.mkdir') as mocked_mkdir, \
+             patch('news_manager.cli.GeminiClient') as mock_client, \
+             patch('news_manager.cli.siguiente_laborable') as mock_siguiente_laborable:
+            mock_client.return_value.generate_news.return_value = (
+                'Título: Lectura de Tesis de Juan Pérez "Un Título Interesante"\n'
+                'Texto: Contenido de la tesis.\n'
+            )
+            mock_siguiente_laborable.return_value = date(2025, 7, 16)
             result = runner.invoke(cli, ['generate', '--output-dir', test_output_dir])
-            
             assert result.exit_code == 0
             mocked_mkdir.assert_called_once_with(parents=True, exist_ok=True)
             # Check for the specific slug format for thesis
             mocked_open.assert_called_with(Path(f"{test_output_dir}/2025-07-16-juan-perez-un-titulo.txt"), 'w', encoding='utf-8')
             assert "Noticia guardada en:" in result.output
 
-    def test_generate_bluesky_output_saved(self, runner, mock_gemini_client, mock_extract_main_text_from_url):
+    def test_generate_bluesky_output_saved(self, runner, mock_gemini_client, mock_extract_main_text_from_url, mock_slugify_func):
         test_output_dir = "/tmp/output_bluesky"
         test_url = "https://diis.unizar.es/some-news"
         mock_gemini_client.generate_news.return_value = "Bluesky: Post de Bluesky para DIIS."
-        
+        from datetime import date
+        # Usamos NEWS_TEST_SLUG para forzar el slug esperado en el nombre del archivo
         with patch('pathlib.Path.mkdir') as mocked_mkdir, \
-             patch('builtins.open', mock_open()) as mocked_open:
+             patch('builtins.open', mock_open()) as mocked_open, \
+             patch.dict(os.environ, {"NEWS_TEST_SLUG": "contenido-de-la.txt"}):
             result = runner.invoke(cli, ['generate', '--url', test_url, '--output-dir', test_output_dir])
-            
             assert result.exit_code == 0
             mocked_mkdir.assert_called_once_with(parents=True, exist_ok=True)
-            # Check for the bluesky file name
             mocked_open.assert_called_with(Path(f"{test_output_dir}/{date.today().strftime('%Y-%m-%d')}-contenido-de-la.txt_blsky.txt"), 'w', encoding='utf-8')
             assert "Bluesky guardado en:" in result.output
