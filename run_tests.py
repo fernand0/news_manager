@@ -19,7 +19,9 @@ def run_tests():
         "tests/",
         "-v",
         "--tb=short",
-        "--disable-warnings"
+        "--disable-warnings",
+        "--cov=news_manager",
+        "--cov-report=term-missing"
     ]
     
     try:

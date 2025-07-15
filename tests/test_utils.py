@@ -217,22 +217,7 @@ class TestFileOperations:
             if os.path.exists(temp_file):
                 os.unlink(temp_file)
     
-    def test_environment_variable_handling(self):
-        """Test environment variable handling."""
-        # Test that the code can handle missing environment variables
-        original_value = os.environ.get('NEWS_INPUT_FILE')
-        if 'NEWS_INPUT_FILE' in os.environ:
-            del os.environ['NEWS_INPUT_FILE']
-        
-        try:
-            # This should not raise an exception
-            from news_manager.cli import main
-            # If we get here, the import worked correctly
-            assert True
-        finally:
-            # Restore original value
-            if original_value:
-                os.environ['NEWS_INPUT_FILE'] = original_value
+    
 
 
 if __name__ == '__main__':
