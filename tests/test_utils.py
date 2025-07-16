@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from pathlib import Path
 import tempfile
 import os
+import logging
 
 # Import the functions we want to test
 from news_manager.cli import slugify, extract_person_names, siguiente_laborable, parse_output
@@ -216,8 +217,52 @@ class TestFileOperations:
             # Clean up
             if os.path.exists(temp_file):
                 os.unlink(temp_file)
-    
-    
+
+
+class TestWriteFile(object):
+    """Test the write_file function."""
+
+    def test_write_file_success(self):
+        """Test that the file is written correctly."""
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+            temp_file = f.name
+        
+        try:
+            from news_manager.utils_base import write_file
+            write_file(temp_file, "test content")
+            with open(temp_file, 'r') as f:
+                content = f.read()
+            assert content == "test content"
+        finally:
+            if os.path.exists(temp_file):
+                os.unlink(temp_file)
+
+    def test_write_file_error(self, caplog):
+        """Test that an exception is raised when a write error occurs."""
+        from news_manager.utils_base import write_file
+        write_file("/non/existent/path", "test content")
+        assert "Error writing file" in caplog.text
+
+
+class TestSetupLogging(object):
+    """Test the setup_logging function."""
+
+    def test_setup_logging_default(self):
+        """Test that the log is configured correctly by default."""
+        from news_manager.utils_base import setup_logging
+        logger = setup_logging()
+        assert logger.level == logging.DEBUG
+        assert any(isinstance(h, logging.FileHandler) for h in logger.handlers)
+        assert any(h.baseFilename == '/tmp/manage_agenda.log' for h in logger.handlers)
+
+    def test_setup_logging_with_logdir(self):
+        """Test that the log is configured correctly when a directory is specified."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            from news_manager.utils_base import setup_logging
+            logger = setup_logging(log_dir=temp_dir)
+            assert logger.level == logging.DEBUG
+            assert any(isinstance(h, logging.FileHandler) for h in logger.handlers)
+            assert any(h.baseFilename == f'{temp_dir}/manage_agenda.log' for h in logger.handlers)
 
 
 if __name__ == '__main__':

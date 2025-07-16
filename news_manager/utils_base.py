@@ -14,7 +14,7 @@ def write_file(filename, content):
         content (str): The content to write.
     """
     try:
-        with open(f"{DEFAULT_DATA_DIR}{filename}", "w") as file:
+        with open(filename, "w") as file:
             file.write(content)
         logging.info(f"File written: {filename}")
     except Exception as e:
@@ -22,20 +22,20 @@ def write_file(filename, content):
 
 
 
-def setup_logging():
+def setup_logging(log_dir=None):
     """Configures logging to stdout or a file."""
-    print(f"Setting logging")
-    if not LOGDIR:
+    if not log_dir:
         logFile = f"/tmp/manage_agenda.log"
     else:
-        logFile = f"{LOGDIR}/manage_agenda.log"
+        logFile = f"{log_dir}/manage_agenda.log"
 
-    logging.basicConfig(
-        filename = logFile,
-        # stream=sys.stdout,
-        level=logging.DEBUG,
-        format="%(asctime)s %(levelname)s: %(message)s",
-    )
+    logger = logging.getLogger('news_manager')
+    logger.setLevel(logging.DEBUG)
+    handler = logging.FileHandler(logFile)
+    formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
 
 
 

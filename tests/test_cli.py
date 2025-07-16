@@ -17,32 +17,43 @@ def mock_env_vars():
 
 @pytest.fixture(autouse=True)
 def mock_os_path_checks():
-    # This mock will allow click.Path to pass its initial validation
-    # We will control the behavior of exists and is_file for specific paths in tests
+    """Fixture to mock file system checks for tests."""
     original_exists = os.path.exists
     original_is_file = os.path.isfile
+    original_access = os.access
 
     def mock_exists(path):
-        if "/tmp/noticia.txt" in path or "/tmp/my_custom_input.txt" in path or \
-           "/tmp/env_input.txt" in path or "/tmp/empty.txt" in path or \
-           "/tmp/bad_encoding.txt" in path or "/tmp/no_permission.txt" in path or \
-           "/tmp/any_file.txt" in path:
+        if isinstance(path, str) and path.startswith('/tmp/'):
             return True
         return original_exists(path)
 
     def mock_is_file(path):
-        if "/tmp/not_a_file" in path:
+        if isinstance(path, str) and path == '/tmp/not_a_file':
             return False
-        if "/tmp/noticia.txt" in path or "/tmp/my_custom_input.txt" in path or \
-           "/tmp/env_input.txt" in path or "/tmp/empty.txt" in path or \
-           "/tmp/bad_encoding.txt" in path or "/tmp/no_permission.txt" in path or \
-           "/tmp/any_file.txt" in path:
+        if isinstance(path, str) and path.startswith('/tmp/'):
             return True
         return original_is_file(path)
 
+    def mock_access(path, mode):
+        if isinstance(path, str) and path == '/tmp/no_permission.txt' and mode == os.R_OK:
+            return False
+        if isinstance(path, str) and path.startswith('/tmp/'):
+            return True
+        return original_access(path, mode)
+
+    def mock_path_exists(self):
+        return mock_exists(str(self))
+
+    def mock_path_is_file(self):
+        return mock_is_file(str(self))
+
     with patch('os.path.exists', side_effect=mock_exists), \
-         patch('os.path.isfile', side_effect=mock_is_file):
+         patch('os.path.isfile', side_effect=mock_is_file), \
+         patch('os.access', side_effect=mock_access), \
+         patch('pathlib.Path.exists', new=mock_path_exists), \
+         patch('pathlib.Path.is_file', new=mock_path_is_file):
         yield
+
 
 @pytest.fixture
 def mock_gemini_client():
@@ -73,6 +84,11 @@ def mock_siguiente_laborable():
     with patch('news_manager.cli.siguiente_laborable') as mock_sl:
         mock_sl.return_value = date(2025, 7, 16) # Un día fijo para pruebas
         yield mock_sl
+
+@pytest.fixture(autouse=True)
+def mock_setup_logging():
+    with patch('news_manager.cli.setup_logging') as mock_logging:
+        yield mock_logging
 
 class TestGenerateCommand:
     def test_generate_with_default_input_file(self, runner, mock_gemini_client, mock_siguiente_laborable):
@@ -234,17 +250,13 @@ class TestGenerateCommand:
         assert "Error: No se pudo extraer suficiente texto de la URL proporcionada." in result.output
 
     def test_generate_unicode_decode_error(self, runner):
-        with patch('pathlib.Path.exists', return_value=True), \
-             patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', side_effect=UnicodeDecodeError('utf-8', b'\x80', 0, 1, 'invalid start byte')):
+        with patch('news_manager.cli.open', side_effect=UnicodeDecodeError('utf-8', b'\x80', 0, 1, 'invalid start byte')):
             result = runner.invoke(cli, ['generate', '-i', '/tmp/bad_encoding.txt'])
             assert result.exit_code != 0
             assert "Error: No se puede leer el archivo /tmp/bad_encoding.txt. Verifica que sea un archivo de texto válido." in result.output
 
     def test_generate_permission_error(self, runner):
-        with patch('pathlib.Path.exists', return_value=True), \
-             patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', side_effect=PermissionError):
+        with patch('news_manager.cli.open', side_effect=PermissionError):
             result = runner.invoke(cli, ['generate', '-i', '/tmp/no_permission.txt'])
             assert result.exit_code != 0
             assert "Error: No tienes permisos para leer el archivo /tmp/no_permission.txt" in result.output
