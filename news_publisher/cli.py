@@ -5,6 +5,7 @@ from configparser import ConfigParser
 from dotenv import load_dotenv
 import subprocess
 import re
+import tempfile
 from news_manager.utils_base import setup_logging
 
 def edit_content_in_editor(initial_content):

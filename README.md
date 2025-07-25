@@ -17,32 +17,32 @@ This project uses the Google Gemini API. You need to provide your API key in an 
 
 > **Note:** The `.env` file is included in `.gitignore` and should not be committed to your repository.
 
-### 2. Input File Configuration (Opcional)
+### 2. Input File Configuration (Optional)
 
 You can configure a default input file using an environment variable:
 
 ```bash
-# En tu archivo .env
-NEWS_INPUT_FILE="/ruta/a/tu/archivo/por/defecto.txt"
+# In your .env file
+NEWS_INPUT_FILE="/path/to/your/default/file.txt"
 ```
 
 Or set it in your shell:
 ```bash
-export NEWS_INPUT_FILE="/ruta/a/tu/archivo/por/defecto.txt"
+export NEWS_INPUT_FILE="/path/to/your/default/file.txt"
 ```
 
-### 3. Output Directory Configuration (Opcional)
+### 3. Output Directory Configuration (Optional)
 
 You can configure a default output directory for saving generated files using an environment variable:
 
 ```bash
-# En tu archivo .env
-NEWS_OUTPUT_DIR="/ruta/a/tu/directorio/de/salida"
+# In your .env file
+NEWS_OUTPUT_DIR="/path/to/your/output/directory"
 ```
 
 Or set it in your shell:
 ```bash
-export NEWS_OUTPUT_DIR="/ruta/a/tu/directorio/de/salida"
+export NEWS_OUTPUT_DIR="/path/to/your/output/directory"
 ```
 
 When this variable is set, the generated news and Bluesky files will be automatically saved to this directory without needing to specify `--output-dir` each time.
@@ -92,102 +92,102 @@ uv pip install -e .
 
 Generates a news story by sending the content of an input file or a URL to the Gemini API.
 
-**Opciones de entrada (exclusivas):**
+**Input options (exclusive):**
 
-- `--input-file` / `-i`: Archivo de texto local
-- `--url`: URL de una noticia online
+- `--input-file` / `-i`: Local text file
+- `--url`: URL of an online news article
 
-**Opciones de personalización:**
+**Customization options:**
 
-- `--prompt-extra`: Instrucciones adicionales para personalizar la generación
-- `--interactive-prompt`: Modo interactivo para añadir instrucciones personalizadas
-- `--output-dir`: Directorio donde guardar los archivos generados (por defecto: usa NEWS_OUTPUT_DIR o no guarda archivos)
+- `--prompt-extra`: Additional instructions to customize the generation
+- `--interactive-prompt`: Interactive mode to add custom instructions
+- `--output-dir`: Directory to save the generated files (default: uses NEWS_OUTPUT_DIR or does not save files)
 
-> **Nota:** No puedes usar ambas opciones de entrada al mismo tiempo. Si usas ambas, el comando mostrará un error.
+> **Note:** You cannot use both input options at the same time. If you use both, the command will show an error.
 
-**Ejemplos de uso:**
+**Usage examples:**
 
-1. **Desde archivo local**
+1. **From a local file**
    ```bash
-   news-manager generate --input-file ./mi_noticia.txt
-   # o
-   news-manager generate -i ./mi_noticia.txt
+   python -m news_manager generate --input-file ./my_news.txt
+   # or
+   python -m news_manager generate -i ./my_news.txt
    ```
 
-2. **Desde una URL**
+2. **From a URL**
    ```bash
-   news-manager generate --url "https://www.bbc.com/mundo/noticias-xxxxxx"
+   python -m news_manager generate --url "https://www.bbc.com/news/world-xxxxxx"
    ```
 
-3. **Archivo por defecto**
+3. **Default file**
    ```bash
-   news-manager generate
-   # Usará /tmp/noticia.txt o el archivo configurado en NEWS_INPUT_FILE
+   python -m news_manager generate
+   # It will use /tmp/noticia.txt or the file configured in NEWS_INPUT_FILE
    ```
 
-4. **Con instrucciones personalizadas**
+4. **With custom instructions**
    ```bash
-   # Centrarse en una persona específica
-   news-manager generate --url "https://ejemplo.com/noticia" --prompt-extra "céntrate en María Santos e ignora el resto"
+   # Focus on a specific person
+   python -m news_manager generate --url "https://example.com/news" --prompt-extra "focus on María Santos and ignore the rest"
    
-   # Enfocar en un aspecto particular
-   news-manager generate -i noticia.txt --prompt-extra "enfócate solo en los aspectos tecnológicos"
+   # Focus on a particular aspect
+   python -m news_manager generate -i news.txt --prompt-extra "focus only on the technological aspects"
    
-   # Cambiar el tono
-   news-manager generate --url "https://ejemplo.com" --prompt-extra "usa un tono más formal y académico"
+   # Change the tone
+   python -m news_manager generate --url "https://example.com" --prompt-extra "use a more formal and academic tone"
    
-   # Modo interactivo (se te preguntará qué instrucciones quieres)
-   news-manager generate --url "https://ejemplo.com" --interactive-prompt
+   # Interactive mode (you will be asked for instructions)
+   python -m news_manager generate --url "https://example.com" --interactive-prompt
    ```
 
-5. **Guardando archivos generados**
+5. **Saving generated files**
    ```bash
-   # Especificar directorio de salida manualmente
-   news-manager generate --url "https://ejemplo.com" --output-dir ./mis_noticias
+   # Specify output directory manually
+   python -m news_manager generate --url "https://example.com" --output-dir ./my_news
    
-   # Usar directorio configurado en NEWS_OUTPUT_DIR
-   export NEWS_OUTPUT_DIR="/home/usuario/noticias"
-   news-manager generate --url "https://ejemplo.com"
-   # Los archivos se guardarán automáticamente en /home/usuario/noticias
+   # Use directory configured in NEWS_OUTPUT_DIR
+   export NEWS_OUTPUT_DIR="/home/user/news"
+   python -m news_manager generate --url "https://example.com"
+   # Files will be automatically saved in /home/user/news
    ```
 
-### Formato especial para tesis
+### Special format for theses
 
-Cuando la noticia generada corresponde a una tesis doctoral, el sistema produce:
-- **Título:** De la forma `Lectura de Tesis de [nombre] [primer apellido], "[título de la tesis]"`.
-- **Slug/URL:** El archivo generado incluirá el nombre y primer apellido del autor, seguido de palabras clave del título de la tesis.
+When the generated news corresponds to a doctoral thesis, the system produces:
+- **Title:** In the form `PhD Thesis Defense of [name] [first surname], "[thesis title]"`.
+- **Slug/URL:** The generated file will include the author's name and first surname, followed by keywords from the thesis title.
 
-**Ejemplo:**
+**Example:**
 
-- Título generado:
+- Generated title:
   ```
-  Lectura de Tesis de Nombre Apellido, "El título"
+  PhD Thesis Defense of Name Surname, "The Title"
   ```
-- Archivo generado:
+- Generated file:
   ```
-  2025-07-15-nombre-apellido-el-titulo.txt
+  2025-07-15-name-surname-the-title.txt
   ```
 
-Esto facilita la identificación y el acceso a las noticias de tesis, y mejora la legibilidad de los archivos y URLs.
+This facilitates the identification and access to thesis news, and improves the readability of files and URLs.
 
-**Opciones avanzadas:**
+**Advanced options:**
 ```bash
-# Ver ayuda del comando
-news-manager generate --help
+# See command help
+python -m news_manager generate --help
 ```
 
 **Example Output:**
 
 The output will be the formatted news article generated by the Gemini API.
 ```
---- Inicializando cliente AI y generando noticia... ---
-Título: Descubren nueva especie de mariposa luminiscente en el Amazonas los doctores Alistair Finch y Elena Vance
-Texto: El Dr. Alistair Finch, un biólogo de la Universidad de Greendale, junto a la Dra. Elena Vance, ha anunciado el descubrimiento de una nueva especie de mariposa que brilla en la oscuridad en la selva amazónica. Este hallazgo ha sido publicado en un reciente estudio científico.
+--- Initializing AI client and generating news... ---
+Title: New species of luminescent butterfly discovered in the Amazon by doctors Alistair Finch and Elena Vance
+Text: Dr. Alistair Finch, a biologist from Greendale University, along with Dr. Elena Vance, has announced the discovery of a new species of butterfly that glows in the dark in the Amazon rainforest. This finding has been published in a recent scientific study.
 
-La investigación detalla las características únicas de este insecto, que utiliza la bioluminiscencia como un posible mecanismo de defensa y comunicación. El Dr. Finch ha dedicado más de una década al estudio de la entomología en la región, mientras que la Dra. Vance es una experta en genética de insectos. La Universidad de Greendale ha financiado gran parte de esta expedición.
-Enlaces:
-- https://ejemplo.com/noticia-original
-Bluesky: Descubierta una nueva especie de mariposa luminiscente en el Amazonas por los doctores Alistair Finch y Elena Vance. Este increíble hallazgo abre nuevas puertas a la investigación de la bioluminiscencia. #ciencia #naturaleza #descubrimiento [enlace a la noticia]
+The research details the unique characteristics of this insect, which uses bioluminescence as a possible defense and communication mechanism. Dr. Finch has dedicated more than a decade to the study of entomology in the region, while Dr. Vance is an expert in insect genetics. Greendale University has financed a large part of this expedition.
+Links:
+- https://example.com/original-news
+Bluesky: A new species of luminescent butterfly has been discovered in the Amazon by doctors Alistair Finch and Elena Vance. This incredible finding opens new doors for bioluminescence research. #science #nature #discovery [link to news]
 ```
 
 ### `hello`
@@ -196,14 +196,14 @@ Prints a welcome message to confirm that the `news-manager` CLI is correctly ins
 
 **How to run:**
 ```bash
-news-manager hello
+python -m news_manager hello
 ```
 
 **Example Output:**
 ```
 Welcome to News Manager CLI!
 This tool helps you generate and manage news content using the Gemini API.
-Try 'news-manager generate' to create a news story or 'news-manager --help' for more commands.
+Try 'python -m news_manager generate' to create a news story or 'python -m news_manager --help' for more commands.
 ```
 
 ---
@@ -234,57 +234,57 @@ The website features:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Publicar en Bluesky
+## Publish to Bluesky
 
-El proyecto incluye un CLI auxiliar para publicar posts en Bluesky a partir de los archivos generados por News Manager.
+The project includes an auxiliary CLI to publish posts to Bluesky from the files generated by News Manager.
 
-### Estructura del proyecto
+### Project Structure
 
-- `news_manager/`: Paquete principal para generación de noticias y CLI principal.
-- `news_publisher/`: Herramientas auxiliares para publicación en Bluesky (CLI propio).
+- `news_manager/`: Main package for news generation and main CLI.
+- `news_publisher/`: Auxiliary tools for publishing to Bluesky (own CLI).
 
-### Configuración
+### Configuration
 
-1. **Directorio de búsqueda de posts**
-   - Por defecto, el CLI busca archivos `*_blsky.txt` en el directorio configurado en la variable `BLUESKY_POSTS_DIR` de tu `.env`:
+1. **Post search directory**
+   - By default, the CLI searches for `*_blsky.txt` files in the directory configured in the `BLUESKY_POSTS_DIR` variable of your `.env`:
      ```
-     BLUESKY_POSTS_DIR=/ruta/a/tu/directorio
+     BLUESKY_POSTS_DIR=/path/to/your/directory
      ```
-   - Si no está definida, usará el directorio actual.
-   - Puedes sobrescribirlo con el argumento `--dir`.
+   - If not defined, it will use the current directory.
+   - You can override it with the `--dir` argument.
 
-2. **Usuario de Bluesky**
-   - Por defecto, se usa el último perfil definido en `~/.mySocial/config/.rssBlsk`.
-   - Puedes sobrescribirlo con el argumento `--user`.
+2. **Bluesky User**
+   - By default, the last profile defined in `~/.mySocial/config/.rssBlsk` is used.
+   - You can override it with the `--user` argument.
 
-### Uso
+### Usage
 
-Para publicar el último post generado en Bluesky, puedes usar `uv run` o ejecutar el módulo directamente:
+To publish the last generated post to Bluesky, you can use `uv run` or execute the module directly:
 
-**Usando `uv run`:**
+**Using `uv run`:**
 ```bash
 uv run news_publisher publish
 ```
 
-**Ejecutando el módulo:**
+**Executing the module:**
 ```bash
 python -m news_publisher publish
 ```
 
-Opciones:
-- `--dir /ruta/a/archivos` para especificar el directorio de búsqueda.
-- `--user tu_usuario_bluesky` para especificar el usuario de Bluesky.
+Options:
+- `--dir /path/to/files` to specify the search directory.
+- `--user your_bluesky_user` to specify the Bluesky user.
 
-**Ejemplo:**
+**Example:**
 ```bash
-uv run news_publisher publish --dir /home/usuario/noticias --user miusuario
+uv run news_publisher publish --dir /home/user/news --user myuser
 ```
 
-El CLI mostrará el contenido a publicar y pedirá confirmación antes de enviarlo a Bluesky.
+The CLI will show the content to be published and ask for confirmation before sending it to Bluesky.
 
-### Requisitos
-- Tener configurado el archivo `.env` con la variable `BLUESKY_POSTS_DIR` si quieres un directorio por defecto.
-- Tener configurado el archivo `~/.mySocial/config/.rssBlsk` con tus credenciales de Bluesky.
-- Las dependencias se gestionan automáticamente desde `pyproject.toml`.
+### Requirements
+- Have the `.env` file configured with the `BLUESKY_POSTS_DIR` variable if you want a default directory.
+- Have the `~/.mySocial/config/.rssBlsk` file configured with your Bluesky credentials.
+- Dependencies are managed automatically from `pyproject.toml`.
 
-Para convenciones específicas sobre el formato de títulos, slugs y reglas especiales (por ejemplo, para tesis doctorales), consulta el archivo [CONVENCIONES.md](CONVENCIONES.md).
+For specific conventions on the format of titles, slugs, and special rules (for example, for doctoral theses), see the [CONVENTIONES.md](CONVENCIONES.md) file.
