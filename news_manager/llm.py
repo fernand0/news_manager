@@ -2,6 +2,9 @@ import os
 from typing import Optional
 import google.generativeai as genai
 
+from .exceptions import APIError, ConfigurationError, ValidationError
+from .validators import InputValidator
+
 # The system prompt is now part of the LLM implementation
 SYSTEM_PROMPT = """Eres un asistente de redacción de noticias. A partir del texto proporcionado, genera una noticia y un post para redes sociales siguiendo estas directrices:
 
@@ -51,16 +54,52 @@ class GeminiClient(LLMClient):
     """
     def __init__(self):
         api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            raise ValueError("Error: GOOGLE_API_KEY not found. Please set it in your .env file.")
         
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        # Use validator for API key validation
+        try:
+            InputValidator.validate_api_key(api_key, "Google Gemini")
+        except Exception as e:
+            raise ConfigurationError(str(e))
+        
+        try:
+            genai.configure(api_key=api_key)
+            self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        except Exception as e:
+            raise ConfigurationError(
+                "Failed to initialize Gemini client",
+                details=str(e),
+                suggestion="Check your API key and internet connection"
+            )
 
     def generate_news(self, input_text: str, prompt_extra: Optional[str] = None, url: Optional[str] = None) -> str:
         """
         Generates a news story by calling the Gemini API.
+        
+        Args:
+            input_text: The source text for the news article
+            prompt_extra: Optional additional instructions for the AI
+            url: Optional URL that should be included in the links section
+            
+        Returns:
+            The generated news article as a string
+            
+        Raises:
+            APIError: If the Gemini API call fails
+            ValidationError: If input validation fails
         """
+        # Validate inputs
+        if not input_text or not input_text.strip():
+            raise ValidationError(
+                "Input text is empty",
+                suggestion="Provide some text content to generate news from"
+            )
+        
+        if prompt_extra is not None:
+            InputValidator.validate_prompt_extra(prompt_extra)
+        
+        if url is not None:
+            InputValidator.validate_url(url)
+        
         # Construir el prompt completo
         full_prompt = SYSTEM_PROMPT
         
@@ -76,9 +115,21 @@ class GeminiClient(LLMClient):
         
         try:
             response = self.model.generate_content(full_prompt)
+            if not response or not response.text:
+                raise APIError(
+                    "Empty response from API",
+                    api_name="Google Gemini",
+                    suggestion="Try again or check if the input content is appropriate"
+                )
             return response.text
         except Exception as e:
-            # Raise the exception to be handled by the CLI
-            raise RuntimeError(f"An error occurred with the Gemini API: {e}") from e
+            if isinstance(e, (APIError, ValidationError)):
+                raise
+            # Convert generic exceptions to APIError
+            raise APIError(
+                f"Failed to generate content: {str(e)}",
+                api_name="Google Gemini",
+                suggestion="Check your API key, internet connection, and input content"
+            ) from e
 
 

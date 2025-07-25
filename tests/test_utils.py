@@ -6,7 +6,8 @@ import os
 import logging
 
 # Import the functions we want to test
-from news_manager.cli import slugify, extract_person_names, siguiente_laborable, parse_output
+from news_manager.news_generator import slugify, extract_person_names, siguiente_laborable
+from news_manager.news_generator import NewsGenerator
 
 
 class TestSlugify:
@@ -134,7 +135,8 @@ Enlaces:
 
 Bluesky: This is a bluesky post."""
         
-        titulo, texto, bluesky, enlaces = parse_output(text)
+        generator = NewsGenerator()
+        titulo, texto, bluesky, enlaces = generator._parse_output(text)
         
         assert titulo == "Test Title"
         assert texto is not None
@@ -152,7 +154,8 @@ Texto: This is the main text content.
 
 Bluesky: This is a bluesky post."""
         
-        titulo, texto, bluesky, enlaces = parse_output(text)
+        generator = NewsGenerator()
+        titulo, texto, bluesky, enlaces = generator._parse_output(text)
         
         assert titulo == "Test Title"
         assert texto is not None
@@ -168,7 +171,8 @@ Texto: This is the main text content.
 Enlaces:
 - https://example.com"""
         
-        titulo, texto, bluesky, enlaces = parse_output(text)
+        generator = NewsGenerator()
+        titulo, texto, bluesky, enlaces = generator._parse_output(text)
         
         assert titulo == "Test Title"
         assert texto is not None
@@ -179,7 +183,8 @@ Enlaces:
     
     def test_parse_output_empty(self):
         """Test parsing empty output."""
-        titulo, texto, bluesky, enlaces = parse_output("")
+        generator = NewsGenerator()
+        titulo, texto, bluesky, enlaces = generator._parse_output("")
         
         assert titulo is None
         assert texto is None
@@ -190,7 +195,8 @@ Enlaces:
         """Test parsing malformed output."""
         text = """Some random text without proper format."""
         
-        titulo, texto, bluesky, enlaces = parse_output(text)
+        generator = NewsGenerator()
+        titulo, texto, bluesky, enlaces = generator._parse_output(text)
         
         assert titulo is None
         assert texto is None

@@ -2,13 +2,13 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 import requests
 from requests.exceptions import SSLError
-from news_manager.cli import extract_main_text_from_url
+from news_manager.web_extractor import extract_main_text_from_url, WebContentExtractor
 
 
 class TestExtractMainTextFromURL:
     """Test the extract_main_text_from_url function."""
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_extract_main_text_success(self, mock_get):
         """Test successful text extraction from URL."""
         # Mock HTML content
@@ -36,7 +36,7 @@ class TestExtractMainTextFromURL:
         assert "important information" in result
         assert "sidebar" not in result  # Should be filtered out
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_extract_main_text_with_spanish_content(self, mock_get):
         """Test text extraction with Spanish content."""
         mock_html = """
@@ -61,7 +61,7 @@ class TestExtractMainTextFromURL:
         assert "Dra. Ana Martínez" in result
         assert "técnica de purificación" in result
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_extract_main_text_network_error(self, mock_get):
         """Test handling of network errors."""
         mock_get.side_effect = requests.RequestException("Network error")
@@ -69,7 +69,7 @@ class TestExtractMainTextFromURL:
         with pytest.raises(Exception, match="Network error"):
             extract_main_text_from_url("https://example.com/article")
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_extract_main_text_http_error(self, mock_get):
         """Test handling of HTTP errors."""
         mock_response = Mock()
@@ -79,7 +79,7 @@ class TestExtractMainTextFromURL:
         with pytest.raises(Exception):
             extract_main_text_from_url("https://example.com/article")
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_extract_main_text_empty_content(self, mock_get):
         """Test handling of empty content."""
         mock_response = Mock()
@@ -87,10 +87,10 @@ class TestExtractMainTextFromURL:
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
         
-        result = extract_main_text_from_url("https://example.com/article")
-        assert result == ""
+        with pytest.raises(RuntimeError, match="Insufficient content extracted from URL"):
+            extract_main_text_from_url("https://example.com/article")
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_extract_main_text_no_main_content(self, mock_get):
         """Test extraction when no main content is found."""
         mock_html = """
@@ -112,7 +112,7 @@ class TestExtractMainTextFromURL:
         # Should still extract some content even if minimal
         assert len(result) >= 0
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_extract_main_text_with_headers(self, mock_get):
         """Test that headers are properly set for the request."""
         mock_response = Mock()
@@ -132,7 +132,7 @@ class TestExtractMainTextFromURL:
             headers = call_args[1]['headers']
             assert 'User-Agent' in headers
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_extract_main_text_timeout(self, mock_get):
         """Test handling of timeout errors."""
         mock_get.side_effect = requests.Timeout("Request timeout")
@@ -140,7 +140,7 @@ class TestExtractMainTextFromURL:
         with pytest.raises(Exception, match="Request timeout"):
             extract_main_text_from_url("https://example.com/article")
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_extract_main_text_ssl_error(self, mock_get):
         """Test handling of SSL errors."""
         mock_get.side_effect = Exception("SSL certificate error")
@@ -162,7 +162,7 @@ class TestURLValidation:
         with pytest.raises(Exception):
             extract_main_text_from_url("example.com/article")
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_https_url(self, mock_get):
         """Test HTTPS URL handling."""
         mock_response = Mock()
@@ -173,7 +173,7 @@ class TestURLValidation:
         result = extract_main_text_from_url("https://secure.example.com/article")
         assert "HTTPS content" in result
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_http_url(self, mock_get):
         """Test HTTP URL handling."""
         mock_response = Mock()
@@ -188,7 +188,7 @@ class TestURLValidation:
 class TestContentExtraction:
     """Test content extraction logic."""
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_extract_article_content(self, mock_get):
         """Test extraction of article-specific content."""
         mock_html = """
@@ -217,7 +217,7 @@ class TestContentExtraction:
         # Note: The current implementation doesn't filter out sidebar content
         # This is expected behavior for now
     
-    @patch('news_manager.cli.requests.get')
+    @patch('news_manager.web_extractor.requests.Session.get')
     def test_extract_main_content(self, mock_get):
         """Test extraction of main content."""
         mock_html = """

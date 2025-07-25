@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 import os
 from news_manager.llm import GeminiClient, LLMClient, SYSTEM_PROMPT
+from news_manager.exceptions import ConfigurationError, APIError
 
 
 class TestLLMClient:
@@ -30,7 +31,7 @@ class TestGeminiClient:
     def test_gemini_client_no_api_key(self):
         """Test GeminiClient initialization without API key."""
         with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(ValueError, match="GOOGLE_API_KEY not found"):
+            with pytest.raises(ConfigurationError, match="Google Gemini key not found"):
                 GeminiClient()
     
     @patch.dict(os.environ, {'GOOGLE_API_KEY': 'test_key'})
@@ -101,7 +102,7 @@ Bluesky: Test bluesky post."""
             
             client = GeminiClient()
             
-            with pytest.raises(RuntimeError, match="An error occurred with the Gemini API"):
+            with pytest.raises(APIError, match="Failed to generate content"):
                 client.generate_news("Test input")
     
     @patch.dict(os.environ, {'GOOGLE_API_KEY': 'test_key'})

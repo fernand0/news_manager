@@ -1,138 +1,21 @@
 import click
 import os
 import sys
-import re
-import unicodedata
 from pathlib import Path
 from dotenv import load_dotenv
-from datetime import datetime, timedelta
-import requests
-from bs4 import BeautifulSoup
-from .llm import GeminiClient
-from .utils_base import setup_logging
 
-# NEWS_TEST_SLUG es solo para testing: permite forzar el slug en los tests
+from .news_generator import NewsGenerator
+from .file_manager import FileManager
+from .utils_base import setup_logging
+from .web_extractor import extract_main_text_from_url  # For backward compatibility
+from .exceptions import (
+    NewsManagerError, ValidationError, ConfigurationError, 
+    ContentProcessingError, APIError, NetworkError, FileOperationError
+)
+from .validators import InputValidator
+
 # Load environment variables from .env file
 load_dotenv()
-
-
-def extract_main_text_from_url(url):
-    """
-    Descarga la URL y extrae el texto principal de la noticia.
-    """
-    try:
-        resp = requests.get(url, timeout=10)
-        resp.raise_for_status()
-    except Exception as e:
-        raise RuntimeError(f"No se pudo descargar la URL: {e}")
-
-    soup = BeautifulSoup(resp.text, 'html.parser')
-
-    # Heurística: buscar <article>, si no, buscar el <div> más grande con mucho texto
-    article = soup.find('article')
-    if article:
-        text = article.get_text(separator='\n', strip=True)
-        if len(text) > 200:
-            return text
-    # Si no hay <article>, buscar el <div> más largo
-    candidates = soup.find_all(['div', 'section'], recursive=True)
-    best = ''
-    for c in candidates:
-        t = c.get_text(separator='\n', strip=True)
-        if len(t) > len(best):
-            best = t
-    # Fallback: todo el body
-    if len(best) > 200:
-        return best
-    body = soup.body.get_text(separator='\n', strip=True) if soup.body else ''
-    if len(body) > 200:
-        return body
-    # Fallback final: todo el texto visible
-    return soup.get_text(separator='\n', strip=True)
-
-def siguiente_laborable(fecha):
-    """Devuelve el siguiente día laborable (lunes-viernes) a partir de una fecha dada."""
-    siguiente = fecha + timedelta(days=1)
-    while siguiente.weekday() >= 5:  # 5=sábado, 6=domingo
-        siguiente += timedelta(days=1)
-    return siguiente
-
-def extract_person_names(text):
-    """Extrae nombres de personas del texto usando patrones comunes."""
-    # Patrones para nombres de personas
-    patterns = [
-        r'\b(?:Dr\.|Dra\.|Prof\.|Profesora)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b',
-        r'\b([A-Z][a-z]+)\s+(?:y|e)\s+([A-Z][a-z]+)\b',
-        r'\b([A-Z][a-z]+)\s+([A-Z][a-z]+)\b',
-        r'\b(?:el|la)\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)\b'
-    ]
-
-    names = set()
-    for pattern in patterns:
-        matches = re.findall(pattern, text)
-        for match in matches:
-            if isinstance(match, tuple):
-                for name in match:
-                    if len(name) > 2:  # Filtrar nombres muy cortos
-                        names.add(name.strip())
-            else:
-                if len(match) > 2:
-                    names.add(match.strip())
-
-    return list(names)
-
-def slugify(text, max_words=4, person_names=None):
-    """Convierte un texto en un slug para el nombre de archivo, incluyendo nombres de personas."""
-    text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
-    text = re.sub(r'[^\w\s-]', '', text.lower())
-    words = text.split()
-
-    # Si hay nombres de personas, incluirlos al principio
-    if person_names:
-        name_slug = '-'.join(person_names[:2])  # Máximo 2 nombres
-        remaining_words = words[:max_words-1] if len(words) > max_words-1 else words
-        return f"{name_slug}-{'-'.join(remaining_words)}"
-    else:
-        return '-'.join(words[:max_words])
-
-def parse_output(generated_text):
-    """Extrae título, texto, enlaces y bluesky del resultado generado."""
-    titulo = texto = bluesky = None
-    enlaces = []
-    lines = generated_text.splitlines()
-    buffer = []
-    mode = None
-
-    for line in lines:
-        line = line.strip()
-        if not line:  # Skip empty lines
-            continue
-
-        if line.startswith('Título:'):
-            titulo = line.replace('Título:', '').strip()
-            mode = None
-        elif line.startswith('Texto:'):
-            mode = 'texto'
-            buffer = []
-            # Check if there's text on the same line after "Texto:"
-            text_part = line.replace('Texto:', '').strip()
-            if text_part:
-                buffer.append(text_part)
-        elif line.startswith('Enlaces:'):
-            mode = 'enlaces'
-            enlaces = []
-        elif line.startswith('Bluesky:'):
-            bluesky = line.replace('Bluesky:', '').strip()
-            mode = None
-        elif mode == 'texto':
-            buffer.append(line)
-        elif mode == 'enlaces' and line.startswith('-'):
-            enlaces.append(line)
-
-    if buffer:
-        texto = '\n'.join(buffer).strip()
-
-    return titulo, texto, bluesky, enlaces
 
 @click.group()
 @click.version_option()
@@ -193,201 +76,143 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
     Usa --interactive-prompt para activar el modo interactivo.
     """
     try:
-        # Exclusividad de opciones
+        # Validate exclusive options
         if input_file and url:
             click.echo("Error: No puedes usar --input-file y --url al mismo tiempo. Elige solo una opción.", err=True)
             sys.exit(1)
 
-        if url:
-            click.echo(f"--- Descargando y extrayendo noticia de: {url} ---")
-            try:
-                input_text = extract_main_text_from_url(url)
-            except Exception as e:
-                click.echo(f"Error al procesar la URL: {e}", err=True)
-                sys.exit(1)
-            if not input_text or len(input_text.strip()) < 100:
-                click.echo("Error: No se pudo extraer suficiente texto de la URL proporcionada.", err=True)
-                sys.exit(1)
-            click.echo(f"--- Texto extraído (primeros 300 caracteres): ---\n{input_text[:300]}\n--- Fin de muestra ---")
-        else:
-            # Determine the input file path
-            if input_file:
-                file_path = input_file
-            else:
-                # Check environment variable first, then default
-                env_file = os.getenv('NEWS_INPUT_FILE')
-                if env_file:
-                    file_path = Path(env_file)
-                else:
-                    file_path = Path('/tmp/noticia.txt')
-
-            # Validate file exists and is readable
-            if not file_path.exists():
-                click.echo(f"Error: El archivo no existe: {file_path}", err=True)
-                click.echo(f"Sugerencia: Crea el archivo con tu texto fuente o especifica otro archivo con --input-file", err=True)
-                sys.exit(1)
-
-            if not file_path.is_file():
-                click.echo(f"Error: La ruta especificada no es un archivo: {file_path}", err=True)
-                sys.exit(1)
-
-            # Read the input file
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    input_text = f.read().strip()
-            except UnicodeDecodeError:
-                click.echo(f"Error: No se puede leer el archivo {file_path}. Verifica que sea un archivo de texto válido.", err=True)
-                sys.exit(1)
-            except PermissionError:
-                click.echo(f"Error: No tienes permisos para leer el archivo {file_path}", err=True)
-                sys.exit(1)
-            except Exception as e:
-                click.echo(f"Error inesperado: {e}", err=True)
-                sys.exit(1)
-
-            if not input_text:
-                click.echo(f"Error: El archivo {file_path} está vacío.", err=True)
-                sys.exit(1)
-
-            click.echo(f"--- Leyendo archivo: {file_path} ---")
-
-        # Manejar prompt_extra interactivamente si se activa el modo interactivo
+        # Handle interactive prompt
         if interactive_prompt:
-            click.echo("\n--- Instrucciones adicionales ---")
-            click.echo("Ejemplos de instrucciones que puedes usar:")
-            click.echo("• 'céntrate en María Santos e ignora el resto'")
-            click.echo("• 'enfócate solo en los aspectos tecnológicos'")
-            click.echo("• 'usa un tono más formal y académico'")
-            click.echo("• 'destaca especialmente los logros y premios obtenidos'")
-            click.echo("• 'ignora los detalles técnicos y céntrate en el impacto social'")
-            click.echo("• (deja vacío para no añadir instrucciones)")
-            click.echo()
+            prompt_extra = _handle_interactive_prompt()
 
-            prompt_extra = click.prompt(
-                "¿Qué instrucciones adicionales quieres añadir?",
-                default="",
-                type=str
-            ).strip()
-
-        click.echo(f"--- Inicializando cliente AI y generando noticia... ---")
-
-        # Mostrar instrucciones adicionales si se proporcionan
+        # Show additional instructions if provided
         if prompt_extra:
             click.echo(f"--- Instrucciones adicionales: {prompt_extra} ---")
 
-        # Si la URL es de diis.unizar.es, solo generamos la entrada de Bluesky
-        solo_bluesky = url and 'diis.unizar.es' in url
+        # Initialize components
+        news_generator = NewsGenerator()
+        output_dir_path = _determine_output_directory(output_dir)
+        file_manager = FileManager(output_dir_path)
 
-        if solo_bluesky:
-            # Generar solo la entrada de Bluesky
-            client = GeminiClient()
-            # El prompt solo pide el texto para Bluesky
-            bluesky_prompt = (
-                'Genera únicamente un post breve (máximo 300 caracteres) para la red social Bluesky, '
-                'con tono neutro e informativo, mencionando a los protagonistas solo con un apellido, '
-                'la fecha (puedes abreviarla en forma dd/mm hh; si es una hora en punto no hace falta '
-                'que pongas el :00)) y el lugar (por ejemplo, seminario abc en xyz) '
-                'si es una tesis sigue el esquema: "Lectura de Tesis de [Nombre] [Apellido], [dd]/[m] [hh]h, '
-                '[local] tendrá lugar la defensa de la tesis "[Titulo]" '
-                'y terminando con el enlace a la noticia: ' + url
-            )
-            generated_text = client.generate_news(input_text, bluesky_prompt, url)
-            # Extraer solo el campo bluesky
-            _, _, bluesky, _ = parse_output(generated_text)
-            if bluesky and url:
-                bluesky = bluesky.replace('[enlace a la noticia]', url)
-            output_lines = [f'Bluesky: {bluesky}'] if bluesky else []
-            click.echo('\n'.join(output_lines))
+        click.echo("--- Inicializando cliente AI y generando noticia... ---")
+
+        # Generate news content
+        if url:
+            click.echo(f"--- Descargando y extrayendo noticia de: {url} ---")
+            content = news_generator.generate_from_url(url, prompt_extra)
+            input_text = ""  # Not needed for URL-based generation
         else:
-            # Flujo normal: generar solo noticia (sin bluesky)
-            client = GeminiClient()
-            generated_text = client.generate_news(input_text, prompt_extra, url)
-            titulo, texto, bluesky, enlaces = parse_output(generated_text)
-            output_lines = []
-            if titulo:
-                output_lines.append(f'Título: {titulo}')
-            if texto:
-                output_lines.append(f'Texto: {texto}')
-            if enlaces:
-                output_lines.append('Enlaces:')
-                output_lines.extend(enlaces)
-            click.echo('\n'.join(output_lines))
+            file_path = _determine_input_file(input_file)
+            click.echo(f"--- Leyendo archivo: {file_path} ---")
+            content = news_generator.generate_from_file(file_path, prompt_extra)
+            # Read input text for file saving
+            with open(file_path, 'r', encoding='utf-8') as f:
+                input_text = f.read().strip()
 
-        # Determinar directorio de salida
-        final_output_dir = None
-        if output_dir:
-            final_output_dir = output_dir
-        else:
-            env_output_dir = os.getenv('NEWS_OUTPUT_DIR')
-            if env_output_dir:
-                final_output_dir = Path(env_output_dir)
+        # Display generated content
+        _display_content(content)
 
-        # Guardar archivos si se especifica output_dir
-        if final_output_dir:
-            hoy = datetime.now().date()
-            hoy_str = hoy.strftime('%Y-%m-%d')
-            # Crear el directorio siempre antes de guardar
-            final_output_dir.mkdir(parents=True, exist_ok=True)
-            # Permitir inyección de slug para tests
-            test_slug = os.getenv('NEWS_TEST_SLUG')
-            # Si solo bluesky, no guardar noticia
-            if not solo_bluesky:
-                # Extraer nombres de personas del título y texto
-                if titulo and texto:
-                    person_names = extract_person_names(titulo + " " + texto)
-                else:
-                    person_names = []
-                fecha = siguiente_laborable(hoy)
-                fecha_str = fecha.strftime('%Y-%m-%d')
-                # Generar slug incluyendo nombres de personas o, si es tesis, nombre y primer apellido
-                if os.getenv('NEWS_TEST_SLUG'):
-                    slug = os.getenv('NEWS_TEST_SLUG')
-                elif titulo and titulo.startswith('Lectura de Tesis de'):
-                    # Extraer nombre y primer apellido del título y normalizar
-                    match = re.match(r'Lectura de Tesis de ([A-Za-zÁÉÍÓÚáéíóúüÜñÑ]+) ([A-Za-zÁÉÍÓÚáéíóúüÜñÑ]+)', titulo)
-                    if match:
-                        nombre = match.group(1)
-                        apellido = match.group(2)
-                        slug = slugify(f"{nombre} {apellido}")
-                        # Añadir palabras clave del título de la tesis (entre comillas)
-                        titulo_tesis = re.search(r'"([^"]+)"', titulo)
-                        if titulo_tesis:
-                            palabras = slugify(titulo_tesis.group(1), max_words=2)
-                            slug += '-' + palabras
-                    else:
-                        slug = slugify(titulo, max_words=3, person_names=person_names)
-                else:
-                    slug = slugify(titulo, max_words=3, person_names=person_names)
-                base_name = f"{fecha_str}-{slug}"
-                noticia_path = final_output_dir / f"{base_name}.txt"
-                with open(noticia_path, 'w', encoding='utf-8') as f:
-                    f.write(f"Título: {titulo}\n\nTexto: {texto}\n")
-                    if enlaces:
-                        f.write(f"\nEnlaces:\n")
-                        for enlace in enlaces:
-                            f.write(f"{enlace}\n")
-                click.echo(f"Noticia guardada en: {noticia_path}")
-            else:
-                # Solo bluesky, usar input_text para slug
-                if test_slug:
-                    slug = test_slug
-                else:
-                    slug = slugify(input_text, max_words=3)
-                blsky_path = final_output_dir / f"{hoy_str}-{slug}_blsky.txt"
-                if bluesky:
-                    with open(blsky_path, 'w', encoding='utf-8') as f:
-                        f.write(bluesky + '\n')
-                    click.echo(f"Bluesky guardado en: {blsky_path}")
+        # Save files if output directory is specified
+        if file_manager.output_dir:
+            saved_files = file_manager.save_news_content(content, input_text)
+            _display_saved_files(saved_files)
 
-    except (ValueError, RuntimeError) as e:
+    except (ValidationError, ConfigurationError, ContentProcessingError, APIError, NetworkError, FileOperationError) as e:
         click.echo(f"Error: {e}", err=True)
-        sys.exit(1)
-    except PermissionError:
-        click.echo(f"Error: No tienes permisos para leer el archivo {file_path}", err=True)
         sys.exit(1)
     except Exception as e:
         click.echo(f"Error inesperado: {e}", err=True)
         sys.exit(1)
+
+
+def _handle_interactive_prompt() -> str:
+    """Handle interactive prompt for additional instructions."""
+    click.echo("\n--- Instrucciones adicionales ---")
+    click.echo("Ejemplos de instrucciones que puedes usar:")
+    click.echo("• 'céntrate en María Santos e ignora el resto'")
+    click.echo("• 'enfócate solo en los aspectos tecnológicos'")
+    click.echo("• 'usa un tono más formal y académico'")
+    click.echo("• 'destaca especialmente los logros y premios obtenidos'")
+    click.echo("• 'ignora los detalles técnicos y céntrate en el impacto social'")
+    click.echo("• (deja vacío para no añadir instrucciones)")
+    click.echo()
+
+    return click.prompt(
+        "¿Qué instrucciones adicionales quieres añadir?",
+        default="",
+        type=str
+    ).strip()
+
+
+def _determine_input_file(input_file: Path) -> Path:
+    """Determine the input file path from options and environment."""
+    if input_file:
+        file_path = input_file
+    else:
+        # Check environment variable first, then default
+        env_file = os.getenv('NEWS_INPUT_FILE')
+        if env_file:
+            file_path = Path(env_file)
+        else:
+            file_path = Path('/tmp/noticia.txt')
+    
+    return file_path
+
+
+def _determine_output_directory(output_dir: Path) -> Path:
+    """Determine the output directory from options and environment."""
+    if output_dir:
+        return output_dir
+    
+    env_output_dir = os.getenv('NEWS_OUTPUT_DIR')
+    if env_output_dir:
+        return Path(env_output_dir)
+    
+    return None
+
+
+def _display_content(content: dict):
+    """Display the generated content to the user."""
+    output_lines = []
+    
+    if content.get('bluesky_only'):
+        # Only display Bluesky content for special URLs
+        if content.get('bluesky'):
+            output_lines.append(f"Bluesky: {content['bluesky']}")
+    else:
+        # Display full news content
+        if content.get('titulo'):
+            output_lines.append(f"Título: {content['titulo']}")
+        if content.get('texto'):
+            output_lines.append(f"Texto: {content['texto']}")
+        if content.get('enlaces'):
+            output_lines.append('Enlaces:')
+            output_lines.extend(content['enlaces'])
+    
+    if output_lines:
+        click.echo('\n'.join(output_lines))
+
+
+def _display_saved_files(saved_files: dict):
+    """Display information about saved files."""
+    if not saved_files:
+        return
+    
+    for file_type, file_path in saved_files.items():
+        if file_type == 'news':
+            click.echo(f"Noticia guardada en: {file_path}")
+        elif file_type == 'bluesky':
+            click.echo(f"Bluesky guardado en: {file_path}")
+
+
+@cli.command()
+def hello():
+    """
+    Prints a welcome message to confirm that the news-manager CLI is correctly installed.
+    """
+    click.echo("Welcome to News Manager CLI!")
+    click.echo("This tool helps you generate and manage news content using the Gemini API.")
+    click.echo("Try 'news-manager generate' to create a news story or 'news-manager --help' for more commands.")
 
 
 if __name__ == '__main__':
