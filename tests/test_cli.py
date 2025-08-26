@@ -220,50 +220,50 @@ class TestGenerateCommand:
         mock_news_generator.generate_from_url.assert_called_once()
 
     def test_generate_file_not_found_error(self, runner, mock_news_generator):
-        from news_manager.news_generator import NewsGenerationError
-        mock_news_generator.generate_from_file.side_effect = NewsGenerationError("File does not exist")
+        from news_manager.exceptions import ContentProcessingError
+        mock_news_generator.generate_from_file.side_effect = ContentProcessingError("File does not exist")
         result = runner.invoke(cli, ['generate', '-i', '/nonexistent/file.txt'])
         assert result.exit_code != 0
         assert "Error:" in result.output
 
     def test_generate_path_is_not_file_error(self, runner, mock_news_generator):
-        from news_manager.news_generator import NewsGenerationError
-        mock_news_generator.generate_from_file.side_effect = NewsGenerationError("Path is not a file")
+        from news_manager.exceptions import ContentProcessingError
+        mock_news_generator.generate_from_file.side_effect = ContentProcessingError("Path is not a file")
         result = runner.invoke(cli, ['generate', '-i', '/tmp/not_a_file'])
         assert result.exit_code != 0
         assert "Error:" in result.output
 
     def test_generate_empty_input_file_error(self, runner, mock_news_generator):
-        from news_manager.news_generator import NewsGenerationError
-        mock_news_generator.generate_from_file.side_effect = NewsGenerationError("File is empty")
+        from news_manager.exceptions import ContentProcessingError
+        mock_news_generator.generate_from_file.side_effect = ContentProcessingError("File is empty")
         result = runner.invoke(cli, ['generate', '-i', '/tmp/empty.txt'])
         assert result.exit_code != 0
         assert "Error:" in result.output
 
     def test_generate_url_extraction_error(self, runner, mock_news_generator):
-        from news_manager.news_generator import NewsGenerationError
-        mock_news_generator.generate_from_url.side_effect = NewsGenerationError("Failed to extract content from URL")
+        from news_manager.exceptions import ContentProcessingError
+        mock_news_generator.generate_from_url.side_effect = ContentProcessingError("Failed to extract content from URL")
         result = runner.invoke(cli, ['generate', '--url', 'http://bad.url'])
         assert result.exit_code != 0
         assert "Error:" in result.output
 
     def test_generate_url_empty_content_error(self, runner, mock_news_generator):
-        from news_manager.news_generator import NewsGenerationError
-        mock_news_generator.generate_from_url.side_effect = NewsGenerationError("Insufficient content extracted")
+        from news_manager.exceptions import ContentProcessingError
+        mock_news_generator.generate_from_url.side_effect = ContentProcessingError("Insufficient content extracted")
         result = runner.invoke(cli, ['generate', '--url', 'http://empty.url'])
         assert result.exit_code != 0
         assert "Error:" in result.output
 
     def test_generate_unicode_decode_error(self, runner, mock_news_generator):
-        from news_manager.news_generator import NewsGenerationError
-        mock_news_generator.generate_from_file.side_effect = NewsGenerationError("Cannot read file. Please verify it's a valid text file.")
+        from news_manager.exceptions import ContentProcessingError
+        mock_news_generator.generate_from_file.side_effect = ContentProcessingError("Cannot read file. Please verify it's a valid text file.")
         result = runner.invoke(cli, ['generate', '-i', '/tmp/bad_encoding.txt'])
         assert result.exit_code != 0
         assert "Error:" in result.output
 
     def test_generate_permission_error(self, runner, mock_news_generator):
-        from news_manager.news_generator import NewsGenerationError
-        mock_news_generator.generate_from_file.side_effect = NewsGenerationError("No permission to read file")
+        from news_manager.exceptions import ContentProcessingError
+        mock_news_generator.generate_from_file.side_effect = ContentProcessingError("No permission to read file")
         result = runner.invoke(cli, ['generate', '-i', '/tmp/no_permission.txt'])
         assert result.exit_code != 0
         assert "Error:" in result.output
