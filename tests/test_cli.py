@@ -213,10 +213,10 @@ class TestGenerateCommand:
             'bluesky_only': True
         }
         
-        result = runner.invoke(cli, ['generate', '--url', test_url])
+        result = runner.invoke(cli, ['generate', '--url', test_url], input='n\nn\n')
         
         assert result.exit_code == 0
-        assert "Bluesky: Post de Bluesky para DIIS." in result.output
+        assert "Candidato a post para Bluesky" in result.output
         mock_news_generator.generate_from_url.assert_called_once()
 
     def test_generate_file_not_found_error(self, runner, mock_news_generator):
@@ -311,7 +311,7 @@ class TestGenerateCommand:
             'bluesky': Path(f"{test_output_dir}/2025-07-16-contenido-de-la_blsky.txt")
         }
         
-        result = runner.invoke(cli, ['generate', '--url', test_url, '--output-dir', test_output_dir])
+        result = runner.invoke(cli, ['generate', '--url', test_url, '--output-dir', test_output_dir], input='n\nn\n')
         assert result.exit_code == 0
-        assert "Bluesky guardado en:" in result.output
+        assert "Candidato a post para Bluesky" in result.output
         mock_file_manager.save_news_content.assert_called_once()

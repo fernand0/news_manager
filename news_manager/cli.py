@@ -12,7 +12,7 @@ from .exceptions import (
     NewsManagerError, ValidationError, ConfigurationError, 
     ContentProcessingError, APIError, NetworkError, FileOperationError
 )
-from .validators import InputValidator
+from news_publisher.cli import publish_content
 
 # Load environment variables from .env file
 load_dotenv()
@@ -58,7 +58,12 @@ def cli():
     default=None,
     help='Directorio donde guardar los archivos generados (por defecto: usa NEWS_OUTPUT_DIR o no guarda archivos)'
 )
-def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
+@click.option(
+    '--user',
+    default=None,
+    help='Usuario de Bluesky para publicar el post'
+)
+def generate(input_file, url, prompt_extra, interactive_prompt, output_dir, user):
     """
     Genera una noticia a partir de un archivo o una URL (opciones exclusivas).
 
@@ -109,13 +114,17 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
             with open(file_path, 'r', encoding='utf-8') as f:
                 input_text = f.read().strip()
 
-        # Display generated content
-        _display_content(content)
-
-        # Save files if output directory is specified
-        if file_manager.output_dir:
-            saved_files = file_manager.save_news_content(content, input_text)
-            _display_saved_files(saved_files)
+        # Display and save content
+        if content.get('bluesky_only'):
+            _handle_bluesky_interactive(content, user)
+            if file_manager.output_dir:
+                saved_files = file_manager.save_news_content(content, input_text)
+                _display_saved_files(saved_files)
+        else:
+            _display_content(content)
+            if file_manager.output_dir:
+                saved_files = file_manager.save_news_content(content, input_text)
+                _display_saved_files(saved_files)
 
     except (ValidationError, ConfigurationError, ContentProcessingError, APIError, NetworkError, FileOperationError) as e:
         click.echo(f"Error: {e}", err=True)
@@ -123,6 +132,20 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir):
     except Exception as e:
         click.echo(f"Error inesperado: {e}", err=True)
         sys.exit(1)
+
+
+def _handle_bluesky_interactive(content: dict, user: str):
+    """Handle the interactive workflow for Bluesky posts."""
+    click.echo(f"\n--- Candidato a post para Bluesky ---\n{content['bluesky']}\n")
+
+    if click.confirm('¿Quieres modificar el post?', default=False):
+        edited_text = click.edit(content['bluesky'])
+        if edited_text is not None:
+            content['bluesky'] = edited_text.strip()
+            click.echo(f"\n--- Post modificado ---\n{content['bluesky']}\n")
+
+    if click.confirm('¿Quieres publicar el post en Bluesky?', default=True):
+        publish_content(content['bluesky'], user)
 
 
 def _handle_interactive_prompt() -> str:
@@ -175,19 +198,13 @@ def _display_content(content: dict):
     """Display the generated content to the user."""
     output_lines = []
     
-    if content.get('bluesky_only'):
-        # Only display Bluesky content for special URLs
-        if content.get('bluesky'):
-            output_lines.append(f"Bluesky: {content['bluesky']}")
-    else:
-        # Display full news content
-        if content.get('titulo'):
-            output_lines.append(f"Título: {content['titulo']}")
-        if content.get('texto'):
-            output_lines.append(f"Texto: {content['texto']}")
-        if content.get('enlaces'):
-            output_lines.append('Enlaces:')
-            output_lines.extend(content['enlaces'])
+    if content.get('titulo'):
+        output_lines.append(f"Título: {content['titulo']}")
+    if content.get('texto'):
+        output_lines.append(f"Texto: {content['texto']}")
+    if content.get('enlaces'):
+        output_lines.append('Enlaces:')
+        output_lines.extend(content['enlaces'])
     
     if output_lines:
         click.echo('\n'.join(output_lines))

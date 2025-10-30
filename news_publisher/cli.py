@@ -20,20 +20,9 @@ def edit_content_in_editor(initial_content):
     os.unlink(temp_path)
     return edited_content
 
-def publish_bluesky(directory, user):
-    load_dotenv()
-    default_dir = os.getenv('BLUESKY_POSTS_DIR', '.')
-    search_dir = directory or default_dir
-    files = sorted(Path(search_dir).glob('*_blsky.txt'), key=lambda p: p.stat().st_mtime, reverse=True)
-    if not files:
-        click.echo(f'No se encontró ningún archivo *_blsky.txt en el directorio {search_dir}.', err=True)
-        sys.exit(1)
-    last_file = files[0]
-    click.echo(f'Archivo a publicar: {last_file}')
-    with open(last_file, 'r', encoding='utf-8') as f:
-        content = f.read().strip()
+def publish_content(content, user):
     if not content:
-        click.echo('El archivo está vacío.', err=True)
+        click.echo('El contenido está vacío.', err=True)
         sys.exit(1)
     while True:
         click.echo('\n--- Contenido a publicar en Bluesky ---')
@@ -71,6 +60,21 @@ def publish_bluesky(directory, user):
     api = getApi('Blsk', user)
     result = api.publishPost(text, link, "")
     click.echo(f'Respuesta de publicación: {result}')
+
+def publish_bluesky(directory, user):
+    load_dotenv()
+    default_dir = os.getenv('BLUESKY_POSTS_DIR', '.')
+    search_dir = directory or default_dir
+    files = sorted(Path(search_dir).glob('*_blsky.txt'), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not files:
+        click.echo(f'No se encontró ningún archivo *_blsky.txt en el directorio {search_dir}.', err=True)
+        sys.exit(1)
+    last_file = files[0]
+    click.echo(f'Archivo a publicar: {last_file}')
+    with open(last_file, 'r', encoding='utf-8') as f:
+        content = f.read().strip()
+    
+    publish_content(content, user)
 
 @click.group()
 def cli():

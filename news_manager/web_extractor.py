@@ -70,6 +70,20 @@ class WebContentExtractor:
                 logger.info(f"Successfully extracted {len(content)} characters from URL")
                 return content
                 
+            except requests.exceptions.HTTPError as e:
+                if "diis.unizar.es" in url and "/es/" in url and e.response.status_code == 404:
+                    logger.warning(f"Retrying without '/es/' for {url}")
+                    url = url.replace("/es/", "/")
+                    continue  # Retry with the modified URL
+                logger.warning(f"HTTP error on attempt {attempt + 1}: {e}")
+                if attempt == self.retry_count - 1:
+                    raise NetworkError(
+                        f"Failed to extract content after {self.retry_count} attempts",
+                        url=url,
+                        details=str(e),
+                        suggestion="Check your internet connection and verify the URL is accessible"
+                    )
+                time.sleep(1)  # Wait before retry
             except requests.RequestException as e:
                 logger.warning(f"Attempt {attempt + 1} failed: {e}")
                 if attempt == self.retry_count - 1:
