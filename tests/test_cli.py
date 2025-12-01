@@ -60,16 +60,16 @@ def mock_news_generator():
     with patch('news_manager.cli.NewsGenerator') as mock_generator_class:
         mock_instance = mock_generator_class.return_value
         mock_instance.generate_from_file.return_value = {
-            'titulo': 'Noticia de Prueba',
-            'texto': 'Este es el texto de la noticia de prueba. ' * 10,
-            'bluesky': 'Post de Bluesky de prueba.',
+            'titulo': 'Test News',
+            'texto': 'This is the text of the test news.',
+            'bluesky': 'Test Bluesky post.',
             'enlaces': ['- https://example.com/link1'],
             'raw_output': 'Generated content'
         }
         mock_instance.generate_from_url.return_value = {
-            'titulo': 'Noticia de Prueba',
-            'texto': 'Este es el texto de la noticia de prueba. ' * 10,
-            'bluesky': 'Post de Bluesky de prueba.',
+            'titulo': 'Test News',
+            'texto': 'This is the text of the test news.',
+            'bluesky': 'Test Bluesky post.',
             'enlaces': ['- https://example.com/link1'],
             'raw_output': 'Generated content'
         }
@@ -101,9 +101,13 @@ class TestGenerateCommand:
         # Mock Path.exists and Path.is_file for /tmp/noticia.txt
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Test content from file.")):
+             patch('builtins.open', mock_open(read_data="Test content from file.")), \
+             patch('news_manager.cli._determine_input_file', return_value=Path('/tmp/noticia.txt')), \
+             patch('news_manager.cli.select_news_source', return_value=None), \
+             patch('news_manager.cli._select_source_from_menu', return_value=None), \
+             patch('os.getenv', side_effect=lambda key: None): # Mock all os.getenv calls to return None
             
-            result = runner.invoke(cli, ['generate'])
+            result = runner.invoke(cli, ['generate', '--input-file', '/tmp/noticia.txt'])
             
             assert result.exit_code == 0
             assert "--- Reading file: /tmp/noticia.txt ---" in result.output
@@ -150,7 +154,13 @@ class TestGenerateCommand:
         test_prompt = "Focus on the technical details."
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Test content.")):
+             patch('builtins.open', mock_open(read_data="Test content.")), \
+             patch('news_manager.cli.select_news_source', return_value=None), \
+             patch('news_manager.cli._select_source_from_menu', return_value=None), \
+             patch('os.getenv', side_effect=lambda key: None), \
+             patch('news_manager.cli._determine_input_file', return_value=Path('/tmp/dummy_input.txt')):
+            
+            result = runner.invoke(cli, ['generate', '--input-file', '/tmp/dummy_input.txt', '--prompt-extra', test_prompt])
             
             result = runner.invoke(cli, ['generate', '--prompt-extra', test_prompt])
             
@@ -166,9 +176,13 @@ class TestGenerateCommand:
         test_prompt = "Interactive instruction."
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Test content.")):
+             patch('builtins.open', mock_open(read_data="Test content.")), \
+             patch('news_manager.cli.select_news_source', return_value=None), \
+             patch('news_manager.cli._select_source_from_menu', return_value=None), \
+             patch('os.getenv', side_effect=lambda key: None), \
+             patch('news_manager.cli._determine_input_file', return_value=Path('/tmp/dummy_input.txt')):
             
-            result = runner.invoke(cli, ['generate', '--interactive-prompt'], input=test_prompt + '\n')
+            result = runner.invoke(cli, ['generate', '--interactive-prompt', '--input-file', '/tmp/dummy_input.txt'], input=test_prompt + '\n')
             
             assert result.exit_code == 0
             assert "--- Additional instructions ---" in result.output
@@ -183,9 +197,13 @@ class TestGenerateCommand:
         test_output_dir = "/tmp/output_news"
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Test content.")):
+             patch('builtins.open', mock_open(read_data="Test content.")), \
+             patch('news_manager.cli.select_news_source', return_value=None), \
+             patch('news_manager.cli._select_source_from_menu', return_value=None), \
+             patch('os.getenv', side_effect=lambda key: None), \
+             patch('news_manager.cli._determine_input_file', return_value=Path('/tmp/dummy_input.txt')):
             
-            result = runner.invoke(cli, ['generate', '--output-dir', test_output_dir])
+            result = runner.invoke(cli, ['generate', '--output-dir', test_output_dir, '--input-file', '/tmp/dummy_input.txt'])
             
             assert result.exit_code == 0
             assert "News saved in:" in result.output
@@ -197,9 +215,12 @@ class TestGenerateCommand:
         os.environ['NEWS_INPUT_FILE'] = "/tmp/env_input.txt"
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Test content from ENV.")):
+             patch('builtins.open', mock_open(read_data="Test content from ENV.")), \
+             patch('news_manager.cli.select_news_source', return_value=None), \
+             patch('news_manager.cli._select_source_from_menu', return_value=None), \
+             patch('news_manager.cli._determine_input_file', return_value=Path("/tmp/env_input.txt")):
             
-            result = runner.invoke(cli, ['generate'])
+            result = runner.invoke(cli, ['generate', '--input-file', '/tmp/dummy_input.txt'])
             
             assert result.exit_code == 0
             assert "--- Reading file: /tmp/env_input.txt ---" in result.output
@@ -211,9 +232,12 @@ class TestGenerateCommand:
         os.environ['NEWS_OUTPUT_DIR'] = "/tmp/env_output_news"
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Test content.")):
+             patch('builtins.open', mock_open(read_data="Test content.")), \
+             patch('news_manager.cli.select_news_source', return_value=None), \
+             patch('news_manager.cli._select_source_from_menu', return_value=None), \
+             patch('news_manager.cli._determine_input_file', return_value=Path('/tmp/dummy_input.txt')):
             
-            result = runner.invoke(cli, ['generate'])
+            result = runner.invoke(cli, ['generate', '--input-file', '/tmp/dummy_input.txt'])
             
             assert result.exit_code == 0
             assert "News saved in:" in result.output
@@ -257,10 +281,13 @@ class TestGenerateCommand:
 
     def test_generate_file_not_found_error(self, runner, mock_news_generator):
         from news_manager.exceptions import ContentProcessingError
-        mock_news_generator.generate_from_file.side_effect = ContentProcessingError("File does not exist")
-        result = runner.invoke(cli, ['generate', '-i', '/nonexistent/file.txt'])
-        assert result.exit_code != 0
-        assert "Error:" in result.output
+        with patch('news_manager.cli._determine_input_file', return_value=Path('/nonexistent/file.txt')), \
+             patch('news_manager.cli.select_news_source', return_value=None), \
+             patch('news_manager.cli._select_source_from_menu', return_value=None):
+            mock_news_generator.generate_from_file.side_effect = ContentProcessingError("File does not exist")
+            result = runner.invoke(cli, ['generate', '-i', '/nonexistent/file.txt'])
+            assert result.exit_code != 0
+            assert "Error: File does not exist" in result.output
 
 
 
@@ -363,18 +390,15 @@ class TestGenerateCommand:
             'news': Path(f"{test_output_dir}/2025-07-16-juan-perez-an-interesting-title.txt")
 
         }
-
-        
-
         with patch('pathlib.Path.exists', return_value=True), \
-
              patch('pathlib.Path.is_file', return_value=True), \
-
-             patch('builtins.open', mock_open(read_data="Test content.")):
-
+             patch('builtins.open', mock_open(read_data="Test content.")), \
+             patch('news_manager.cli.select_news_source', return_value=None), \
+             patch('news_manager.cli._select_source_from_menu', return_value=None), \
+             patch('os.getenv', side_effect=lambda key: None), \
+             patch('news_manager.cli._determine_input_file', return_value=Path('/tmp/dummy_input.txt')):
             
-
-            result = runner.invoke(cli, ['generate', '--output-dir', test_output_dir])
+            result = runner.invoke(cli, ['generate', '--output-dir', test_output_dir, '--input-file', '/tmp/dummy_input.txt'])
 
             assert result.exit_code == 0
 

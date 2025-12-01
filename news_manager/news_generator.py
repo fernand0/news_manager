@@ -274,7 +274,7 @@ def extract_person_names(text: str) -> List[str]:
 
     names = set()
     for pattern in patterns:
-        matches = re.findall(pattern, text)
+        matches = re.findall(pattern, text, re.U)
         for match in matches:
             if isinstance(match, tuple):
                 for name in match:
