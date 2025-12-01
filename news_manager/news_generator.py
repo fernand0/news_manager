@@ -51,6 +51,27 @@ class NewsGenerator:
         except Exception as e:
             raise ContentProcessingError(f"Failed to generate news from file {file_path}: {e}")
     
+    def generate_from_text(self, text_content: str, prompt_extra: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate news from direct text content (e.g., from email).
+        
+        Args:
+            text_content: Text content to generate news from
+            prompt_extra: Additional instructions for the AI
+            
+        Returns:
+            Dictionary containing generated content
+            
+        Raises:
+            ContentProcessingError: If generation fails
+        """
+        try:
+            if not text_content or len(text_content.strip()) < 10:
+                raise ValidationError("Text content is too short or empty")
+            return self._generate_news_content(text_content, prompt_extra)
+        except Exception as e:
+            raise ContentProcessingError(f"Failed to generate news from text: {e}")
+    
     def generate_from_url(self, url: str, prompt_extra: Optional[str] = None) -> Dict[str, Any]:
         """
         Generate news from a URL.
@@ -146,20 +167,20 @@ class NewsGenerator:
         logger.info("Generating Bluesky-only content for DIIS URL")
         
         bluesky_prompt = (
-            'Genera únicamente un post breve (máximo 300 caracteres) para la red social Bluesky, '
-            'con tono neutro e informativo, mencionando a los protagonistas solo con un apellido, '
-            'la fecha (puedes abreviarla en forma dd/mm hh; si es una hora en punto no hace falta '
-            'que pongas el :00)) y el lugar (por ejemplo, seminario abc en xyz) '
-            'si es una tesis sigue el esquema: "Lectura de Tesis de [Nombre] [Apellido], [dd]/[m] [hh]h, '
-            '[local] tendrá lugar la defensa de la tesis "[Titulo]" '
-            'y terminando con el enlace a la noticia: ' + url
+            'Generate only a short post (maximum 300 characters) for the Bluesky social network, '
+            'with a neutral and informative tone, mentioning the protagonists with only one surname, '
+            'the date (you can abbreviate it as dd/mm hh; if it is an hour on the dot you do not need '
+            'to put the :00)) and the place (for example, abc seminar in xyz) '
+            'if it is a thesis follow the scheme: "PhD Thesis of [Name] [Surname], [dd]/[m] [hh]h, '
+            '[local] the defense of the thesis "[Title]" will take place '
+            'and ending with the link to the news: ' + url
         )
         
         generated_text = self.llm_client.generate_news(content, bluesky_prompt, url)
         _, _, bluesky, _ = self._parse_output(generated_text)
         
         if bluesky and url:
-            bluesky = bluesky.replace('[enlace a la noticia]', url)
+            bluesky = bluesky.replace('[link to the news]', url)
         
         return {
             'titulo': None,
@@ -191,17 +212,17 @@ class NewsGenerator:
             if not line:  # Skip empty lines
                 continue
 
-            if line.startswith('Título:'):
-                titulo = line.replace('Título:', '').strip()
+            if line.startswith('Title:'):
+                titulo = line.replace('Title:', '').strip()
                 mode = None
-            elif line.startswith('Texto:'):
+            elif line.startswith('Text:'):
                 mode = 'texto'
                 buffer = []
                 # Check if there's text on the same line after "Texto:"
-                text_part = line.replace('Texto:', '').strip()
+                text_part = line.replace('Text:', '').strip()
                 if text_part:
                     buffer.append(text_part)
-            elif line.startswith('Enlaces:'):
+            elif line.startswith('Links:'):
                 mode = 'enlaces'
                 enlaces = []
             elif line.startswith('Bluesky:'):

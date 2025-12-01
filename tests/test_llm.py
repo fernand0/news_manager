@@ -135,23 +135,23 @@ class TestSystemPrompt:
     
     def test_system_prompt_contains_required_sections(self):
         """Test that the system prompt contains all required sections."""
-        assert "Título:" in SYSTEM_PROMPT
-        assert "Texto:" in SYSTEM_PROMPT
-        assert "Enlaces:" in SYSTEM_PROMPT
+        assert "Title:" in SYSTEM_PROMPT
+        assert "Text:" in SYSTEM_PROMPT
+        assert "Links:" in SYSTEM_PROMPT
         assert "Bluesky:" in SYSTEM_PROMPT
     
     def test_system_prompt_format_example(self):
         """Test that the system prompt contains the correct format example."""
-        assert "Título: [Título generado]" in SYSTEM_PROMPT
-        assert "Texto: [Texto generado]" in SYSTEM_PROMPT
-        assert "https://ejemplo.com/noticia" in SYSTEM_PROMPT
-        assert "Bluesky: [Post generado]" in SYSTEM_PROMPT
+        assert "Title: [Generated title]" in SYSTEM_PROMPT
+        assert "Text: [Generated text]" in SYSTEM_PROMPT
+        assert "https://example.com/news" in SYSTEM_PROMPT
+        assert "Bluesky: [Generated post]" in SYSTEM_PROMPT
     
     def test_system_prompt_style_guidelines(self):
         """Test that the system prompt contains style guidelines."""
-        assert "Voz Activa" in SYSTEM_PROMPT
-        assert "Tono Neutro" in SYSTEM_PROMPT
-        assert "informativo y objetivo" in SYSTEM_PROMPT
+        assert "Active Voice" in SYSTEM_PROMPT
+        assert "Neutral Tone" in SYSTEM_PROMPT
+        assert "informative and objective" in SYSTEM_PROMPT
 
 
 class TestIntegration:
@@ -160,9 +160,9 @@ class TestIntegration:
     @patch.dict(os.environ, {'GOOGLE_API_KEY': 'test_key'})
     def test_full_generation_flow(self):
         """Test the complete generation flow."""
-        expected_output = """Título: Test News
-Texto: This is a test news article.
-Enlaces:
+        expected_output = """Title: Test News
+Text: This is a test news article.
+Links:
 - https://example.com
 Bluesky: Test bluesky post."""
         

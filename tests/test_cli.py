@@ -96,128 +96,164 @@ def mock_setup_logging():
         yield mock_logging
 
 class TestGenerateCommand:
+
     def test_generate_with_default_input_file(self, runner, mock_news_generator):
         # Mock Path.exists and Path.is_file for /tmp/noticia.txt
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Contenido de prueba del archivo.")):
+             patch('builtins.open', mock_open(read_data="Test content from file.")):
             
             result = runner.invoke(cli, ['generate'])
             
             assert result.exit_code == 0
-            assert "--- Leyendo archivo: /tmp/noticia.txt ---" in result.output
-            assert "Título: Noticia de Prueba" in result.output
-            assert "Texto: Este es el texto de la noticia de prueba." in result.output
+            assert "--- Reading file: /tmp/noticia.txt ---" in result.output
+            assert "Title: Test News" in result.output
+            assert "Text: This is the text of the test news." in result.output
             mock_news_generator.generate_from_file.assert_called_once()
+
+
 
     def test_generate_with_input_file_option(self, runner, mock_news_generator):
         test_file_path = "/tmp/my_custom_input.txt"
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Contenido de prueba del archivo custom.")):
+             patch('builtins.open', mock_open(read_data="Custom test content from file.")):
             
             result = runner.invoke(cli, ['generate', '-i', test_file_path])
             
             assert result.exit_code == 0
-            assert f"--- Leyendo archivo: {test_file_path} ---" in result.output
-            assert "Título: Noticia de Prueba" in result.output
+            assert f"--- Reading file: {test_file_path} ---" in result.output
+            assert "Title: Test News" in result.output
             mock_news_generator.generate_from_file.assert_called_once()
+
+
 
     def test_generate_with_url_option(self, runner, mock_news_generator):
         test_url = "https://example.com/news"
         result = runner.invoke(cli, ['generate', '--url', test_url])
         
         assert result.exit_code == 0
-        assert f"--- Descargando y extrayendo noticia de: {test_url} ---" in result.output
-        assert "Título: Noticia de Prueba" in result.output
+        assert f"--- Downloading and extracting news from: {test_url} ---" in result.output
+        assert "Title: Test News" in result.output
         mock_news_generator.generate_from_url.assert_called_once()
+
+
 
     def test_generate_exclusive_options_error(self, runner):
         result = runner.invoke(cli, ['generate', '-i', '/tmp/file.txt', '--url', 'http://example.com'])
         assert result.exit_code != 0
-        assert "Error: No puedes usar --input-file y --url al mismo tiempo." in result.output
+        assert "Error: You cannot use --input-file and --url at the same time." in result.output
+
+
 
     def test_generate_with_prompt_extra(self, runner, mock_news_generator):
-        test_prompt = "Enfócate en los detalles técnicos."
+        test_prompt = "Focus on the technical details."
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Contenido de prueba.")):
+             patch('builtins.open', mock_open(read_data="Test content.")):
             
             result = runner.invoke(cli, ['generate', '--prompt-extra', test_prompt])
             
             assert result.exit_code == 0
-            assert f"--- Instrucciones adicionales: {test_prompt} ---" in result.output
+            assert f"--- Additional instructions: {test_prompt} ---" in result.output
             # Check that generate_from_file was called with the prompt
             args, kwargs = mock_news_generator.generate_from_file.call_args
             assert test_prompt in args
 
+
+
     def test_generate_with_interactive_prompt(self, runner, mock_news_generator):
-        test_prompt = "Instrucción interactiva."
+        test_prompt = "Interactive instruction."
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Contenido de prueba.")):
+             patch('builtins.open', mock_open(read_data="Test content.")):
             
             result = runner.invoke(cli, ['generate', '--interactive-prompt'], input=test_prompt + '\n')
             
             assert result.exit_code == 0
-            assert "--- Instrucciones adicionales ---" in result.output
-            assert f"--- Instrucciones adicionales: {test_prompt} ---" in result.output
+            assert "--- Additional instructions ---" in result.output
+            assert f"--- Additional instructions: {test_prompt} ---" in result.output
             # Check that generate_from_file was called with the prompt
             args, kwargs = mock_news_generator.generate_from_file.call_args
             assert test_prompt in args
+
+
 
     def test_generate_with_output_dir(self, runner, mock_news_generator, mock_file_manager):
         test_output_dir = "/tmp/output_news"
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Contenido de prueba.")):
+             patch('builtins.open', mock_open(read_data="Test content.")):
             
             result = runner.invoke(cli, ['generate', '--output-dir', test_output_dir])
             
             assert result.exit_code == 0
-            assert "Noticia guardada en:" in result.output
+            assert "News saved in:" in result.output
             mock_file_manager.save_news_content.assert_called_once()
+
+
 
     def test_generate_with_news_input_file_env_var(self, runner, mock_news_generator, mock_env_vars):
         os.environ['NEWS_INPUT_FILE'] = "/tmp/env_input.txt"
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Contenido de prueba desde ENV.")):
+             patch('builtins.open', mock_open(read_data="Test content from ENV.")):
             
             result = runner.invoke(cli, ['generate'])
             
             assert result.exit_code == 0
-            assert "--- Leyendo archivo: /tmp/env_input.txt ---" in result.output
+            assert "--- Reading file: /tmp/env_input.txt ---" in result.output
             mock_news_generator.generate_from_file.assert_called_once()
+
+
 
     def test_generate_with_news_output_dir_env_var(self, runner, mock_news_generator, mock_file_manager, mock_env_vars):
         os.environ['NEWS_OUTPUT_DIR'] = "/tmp/env_output_news"
         with patch('pathlib.Path.exists', return_value=True), \
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Contenido de prueba.")):
+             patch('builtins.open', mock_open(read_data="Test content.")):
             
             result = runner.invoke(cli, ['generate'])
             
             assert result.exit_code == 0
-            assert "Noticia guardada en:" in result.output
+            assert "News saved in:" in result.output
             mock_file_manager.save_news_content.assert_called_once()
 
+
+
     def test_generate_url_diis_unizar_solo_bluesky(self, runner, mock_news_generator):
+
         test_url = "https://diis.unizar.es/some-news"
+
         mock_news_generator.generate_from_url.return_value = {
+
             'titulo': None,
+
             'texto': None,
-            'bluesky': 'Post de Bluesky para DIIS.',
+
+            'bluesky': 'Bluesky post for DIIS.',
+
             'enlaces': [],
+
             'raw_output': 'Generated content',
+
             'bluesky_only': True
+
         }
+
         
+
         result = runner.invoke(cli, ['generate', '--url', test_url], input='n\nn\n')
+
         
+
         assert result.exit_code == 0
-        assert "Candidato a post para Bluesky" in result.output
+
+        assert "Candidate for Bluesky post" in result.output
+
         mock_news_generator.generate_from_url.assert_called_once()
+
+
 
     def test_generate_file_not_found_error(self, runner, mock_news_generator):
         from news_manager.exceptions import ContentProcessingError
@@ -226,12 +262,16 @@ class TestGenerateCommand:
         assert result.exit_code != 0
         assert "Error:" in result.output
 
+
+
     def test_generate_path_is_not_file_error(self, runner, mock_news_generator):
         from news_manager.exceptions import ContentProcessingError
         mock_news_generator.generate_from_file.side_effect = ContentProcessingError("Path is not a file")
         result = runner.invoke(cli, ['generate', '-i', '/tmp/not_a_file'])
         assert result.exit_code != 0
         assert "Error:" in result.output
+
+
 
     def test_generate_empty_input_file_error(self, runner, mock_news_generator):
         from news_manager.exceptions import ContentProcessingError
@@ -240,12 +280,16 @@ class TestGenerateCommand:
         assert result.exit_code != 0
         assert "Error:" in result.output
 
+
+
     def test_generate_url_extraction_error(self, runner, mock_news_generator):
         from news_manager.exceptions import ContentProcessingError
         mock_news_generator.generate_from_url.side_effect = ContentProcessingError("Failed to extract content from URL")
         result = runner.invoke(cli, ['generate', '--url', 'http://bad.url'])
         assert result.exit_code != 0
         assert "Error:" in result.output
+
+
 
     def test_generate_url_empty_content_error(self, runner, mock_news_generator):
         from news_manager.exceptions import ContentProcessingError
@@ -254,64 +298,126 @@ class TestGenerateCommand:
         assert result.exit_code != 0
         assert "Error:" in result.output
 
+
+
     def test_generate_unicode_decode_error(self, runner, mock_news_generator):
+
         from news_manager.exceptions import ContentProcessingError
+
         mock_news_generator.generate_from_file.side_effect = ContentProcessingError("Cannot read file. Please verify it's a valid text file.")
+
         result = runner.invoke(cli, ['generate', '-i', '/tmp/bad_encoding.txt'])
+
         assert result.exit_code != 0
+
         assert "Error:" in result.output
+
+
 
     def test_generate_permission_error(self, runner, mock_news_generator):
+
         from news_manager.exceptions import ContentProcessingError
+
         mock_news_generator.generate_from_file.side_effect = ContentProcessingError("No permission to read file")
+
         result = runner.invoke(cli, ['generate', '-i', '/tmp/no_permission.txt'])
+
         assert result.exit_code != 0
+
         assert "Error:" in result.output
 
+
+
     def test_generate_general_exception(self, runner, mock_news_generator):
+
         mock_news_generator.generate_from_file.side_effect = Exception("Unexpected error")
+
         result = runner.invoke(cli, ['generate', '-i', '/tmp/any_file.txt'])
+
         assert result.exit_code != 0
-        assert "Error inesperado:" in result.output
+
+        assert "Unexpected error:" in result.output
+
+
 
     def test_generate_thesis_slug_generation(self, runner, mock_news_generator, mock_file_manager):
+
         test_output_dir = "/tmp/output_thesis"
+
         mock_news_generator.generate_from_file.return_value = {
-            'titulo': 'Lectura de Tesis de Juan Pérez "Un Título Interesante"',
-            'texto': 'Contenido de la tesis.',
-            'bluesky': 'Post de Bluesky de prueba.',
+
+            'titulo': 'PhD Thesis of Juan Pérez "An Interesting Title"',
+
+            'texto': 'Content of the thesis.',
+
+            'bluesky': 'Test Bluesky post.',
+
             'enlaces': [],
+
             'raw_output': 'Generated content'
+
         }
+
         mock_file_manager.save_news_content.return_value = {
-            'news': Path(f"{test_output_dir}/2025-07-16-juan-perez-un-titulo.txt")
+
+            'news': Path(f"{test_output_dir}/2025-07-16-juan-perez-an-interesting-title.txt")
+
         }
+
         
+
         with patch('pathlib.Path.exists', return_value=True), \
+
              patch('pathlib.Path.is_file', return_value=True), \
-             patch('builtins.open', mock_open(read_data="Contenido de prueba.")):
+
+             patch('builtins.open', mock_open(read_data="Test content.")):
+
             
+
             result = runner.invoke(cli, ['generate', '--output-dir', test_output_dir])
+
             assert result.exit_code == 0
-            assert "Noticia guardada en:" in result.output
+
+            assert "News saved in:" in result.output
+
             mock_file_manager.save_news_content.assert_called_once()
 
+
+
     def test_generate_bluesky_output_saved(self, runner, mock_news_generator, mock_file_manager):
+
         test_output_dir = "/tmp/output_bluesky"
+
         test_url = "https://diis.unizar.es/some-news"
+
         mock_news_generator.generate_from_url.return_value = {
+
             'titulo': None,
+
             'texto': None,
-            'bluesky': 'Post de Bluesky para DIIS.',
+
+            'bluesky': 'Bluesky post for DIIS.',
+
             'enlaces': [],
+
             'raw_output': 'Generated content',
+
             'bluesky_only': True
+
         }
+
         mock_file_manager.save_news_content.return_value = {
-            'bluesky': Path(f"{test_output_dir}/2025-07-16-contenido-de-la_blsky.txt")
+
+            'bluesky': Path(f"{test_output_dir}/2025-07-16-content-of-the-blsky.txt")
+
         }
+
         
+
         result = runner.invoke(cli, ['generate', '--url', test_url, '--output-dir', test_output_dir], input='n\nn\n')
+
         assert result.exit_code == 0
-        assert "Candidato a post para Bluesky" in result.output
+
+        assert "Candidate for Bluesky post" in result.output
+
         mock_file_manager.save_news_content.assert_called_once()

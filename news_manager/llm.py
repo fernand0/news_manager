@@ -6,26 +6,26 @@ from .exceptions import APIError, ConfigurationError, ValidationError
 from .validators import InputValidator
 
 # The system prompt is now part of the LLM implementation
-SYSTEM_PROMPT = """Eres un asistente de redacción de noticias. A partir del texto proporcionado, genera una noticia y un post para redes sociales siguiendo estas directrices:
+SYSTEM_PROMPT = """You are a news writing assistant for the web of a computer science department. From the provided text, generate a news article and a social media post in Spanish (but do not translate the texts that are written in English) following these guidelines:
 
-**Estilo General:**
-*   **Voz Activa:** Utiliza la voz activa siempre que sea posible. Evita el uso excesivo de la voz pasiva para que el texto resulte más directo y enérgico.
-*   **Tono Neutro:** Mantén un tono informativo y objetivo.
+**General Style:**
+*   **Active Voice:** Use active voice whenever possible. Avoid excessive use of passive voice to make the text more direct and energetic.
+*   **Neutral Tone:** Maintain an informative and objective tone.
 
-**Formato de Salida:**
-1.  **Título:** Debe contener el asunto principal y los nombres de los protagonistas. **Hazlo conciso y evita acrónimos o códigos específicos. Por ejemplo, en lugar de "ganadores del ABCxxx2025", usa un término más general como "premiados"**. **Cuando se trate de una tesis, el título debe ser de la forma: Lectura de Tesis de [nombre] [primer apellido], seguida del título de la tesis entre comillas.**
-2.  **Texto:** Debe tener un párrafo inicial con los aspectos fundamentales, incluyendo a las personas protagonistas junto al nombre del proyecto o actividad. 
-Luego, uno o más párrafos con detalles sobre las personas y las organizaciones implicadas. Si es posible, agrupar los protagonistas con sus directores. Cuando se trate de un proyecto, me gustaría que primero aparezcan las personas y luego los datos relativos al mismo. Si el texto original contiene un resumen, abstract o biografía, inclúyelos al final del texto.
-3.  **Enlaces:** Una lista de URLs relevantes si se mencionan. Usa URLs directas sin formato markdown, solo con guión seguido de la URL. **Cuando se trate de una tesis, la URL generada (slug) debe incluir el nombre y el primer apellido del autor.**
-4.  **Bluesky:** Un post breve (máximo 300 caracteres) para la red social Bluesky. **Debe tener un tono neutro e informativo**, mencionar a los protagonistas y terminar con un enlace a la noticia completa (puedes usar un marcador de posición como '[enlace a la noticia]').
+**Output Format:**
+1.  **Title:** It should contain the main subject and the names of the protagonists. **Make it concise and avoid specific acronyms or codes. For example, instead of "winners of the ABCxxx2025", use a more general term like "awardees"**. **When it is a thesis, the title should be in the form: PhD Thesis of [name] [first surname], followed by the title of the thesis in quotes.**
+2.  **Text:** It should have an initial paragraph with the main aspects, including the protagonists along with the name of the project or activity.
+Then, one or more paragraphs with details about the people and organizations involved. If possible, group the protagonists with their directors. When it is a project, I would like the people to appear first and then the data related to it. If the original text contains a summary, abstract or biography, include them at the end of the text.
+3.  **Links:** A list of relevant URLs if mentioned. Use direct URLs without markdown format, just with a hyphen followed by the URL. **When it is a thesis, the generated URL (slug) must include the name and first surname of the author.**
+4.  **Bluesky:** A short post (maximum 300 characters) for the Bluesky social network. **It must have a neutral and informative tone**, mention the protagonists and end with a link to the full news (you can use a placeholder like '[link to the news]').
 
-Formatea la salida EXACTAMENTE así, sin texto adicional antes o después:
-Título: [Título generado]
-Texto: [Texto generado]
-Enlaces:
-- https://ejemplo.com/noticia
-- https://ejemplo.com/institucion
-Bluesky: [Post generado]
+Format the output EXACTLY like this, with no additional text before or after:
+Title: [Generated title]
+Text: [Generated text]
+Links:
+- https://example.com/news
+- https://example.com/institution
+Bluesky: [Generated post]
 """
 
 class LLMClient:
@@ -36,12 +36,12 @@ class LLMClient:
     def generate_news(self, input_text: str, prompt_extra: Optional[str] = None, url: Optional[str] = None) -> str:
         """
         Generates a news article from the given input text.
-        
+
         Args:
             input_text: The source text for the news article.
             prompt_extra: Optional additional instructions for the AI.
             url: Optional URL that should be included in the links section.
-        
+
         Returns:
             The generated news article as a string.
         """
@@ -54,13 +54,13 @@ class GeminiClient(LLMClient):
     """
     def __init__(self):
         api_key = os.getenv("GOOGLE_API_KEY")
-        
+
         # Use validator for API key validation
         try:
             InputValidator.validate_api_key(api_key, "Google Gemini")
         except Exception as e:
             raise ConfigurationError(str(e))
-        
+
         try:
             genai.configure(api_key=api_key)
             self.model = genai.GenerativeModel('gemini-2.5-flash')
@@ -74,15 +74,15 @@ class GeminiClient(LLMClient):
     def generate_news(self, input_text: str, prompt_extra: Optional[str] = None, url: Optional[str] = None) -> str:
         """
         Generates a news story by calling the Gemini API.
-        
+
         Args:
             input_text: The source text for the news article
             prompt_extra: Optional additional instructions for the AI
             url: Optional URL that should be included in the links section
-            
+
         Returns:
             The generated news article as a string
-            
+
         Raises:
             APIError: If the Gemini API call fails
             ValidationError: If input validation fails
@@ -93,26 +93,26 @@ class GeminiClient(LLMClient):
                 "Input text is empty",
                 suggestion="Provide some text content to generate news from"
             )
-        
+
         if prompt_extra is not None:
             InputValidator.validate_prompt_extra(prompt_extra)
-        
+
         if url is not None:
             InputValidator.validate_url(url)
-        
-        # Construir el prompt completo
+
+        # Build the full prompt
         full_prompt = SYSTEM_PROMPT
-        
-        # Añadir instrucciones adicionales si se proporcionan
+
+        # Add additional instructions if provided
         if prompt_extra:
-            full_prompt += f"\n\n**Instrucciones adicionales:** {prompt_extra}"
-        
-        # Añadir la URL si se proporciona
+            full_prompt += f"\n\n**Additional instructions:** {prompt_extra}"
+
+        # Add the URL if provided
         if url:
-            full_prompt += f"\n\n**URL de origen:** {url}"
-        
-        full_prompt += f"\n\n--- Texto de entrada ---\n{input_text}"
-        
+            full_prompt += f"\n\n**Source URL:** {url}"
+
+        full_prompt += f"\n\n--- Input text ---\n{input_text}"
+
         try:
             response = self.model.generate_content(full_prompt)
             if not response or not response.text:

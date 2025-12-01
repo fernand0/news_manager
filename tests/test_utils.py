@@ -51,14 +51,14 @@ class TestExtractPersonNames:
     
     def test_extract_single_name(self):
         """Test extracting a single person name."""
-        text = "El Dr. Carlos Ruiz ha desarrollado una nueva técnica."
+        text = "Dr. Carlos Ruiz has developed a new technique."
         result = extract_person_names(text)
         assert "Carlos" in result
         assert "Ruiz" in result
     
     def test_extract_multiple_names(self):
         """Test extracting multiple person names."""
-        text = "Los doctores María Santos y Juan García han colaborado en el proyecto."
+        text = "The doctors María Santos and Juan García have collaborated on the project."
         result = extract_person_names(text)
         # The function extracts individual names, not full names
         # It looks for patterns like "Dr. Name" or "Name Name"
@@ -67,7 +67,7 @@ class TestExtractPersonNames:
     
     def test_extract_names_with_titles(self):
         """Test extracting names with academic titles."""
-        text = "La Dra. Ana Martínez y el Dr. Miguel García han publicado sus hallazgos."
+        text = "Dr. Ana Martínez and Dr. Miguel García have published their findings."
         result = extract_person_names(text)
         # The function extracts individual names from patterns
         # It might extract "Ana", "Martínez", "Miguel", "García" separately
@@ -76,7 +76,7 @@ class TestExtractPersonNames:
     
     def test_extract_names_no_names(self):
         """Test extracting names when no names are present."""
-        text = "Este es un texto sin nombres de personas."
+        text = "This is a text without person names."
         result = extract_person_names(text)
         assert result == []
     
@@ -125,11 +125,11 @@ class TestParseOutput:
     
     def test_parse_complete_output(self):
         """Test parsing complete output with all sections."""
-        text = """Título: Test Title
-Texto: This is the main text content.
+        text = """Title: Test Title
+Text: This is the main text content.
 It has multiple lines.
 
-Enlaces:
+Links:
 - https://example.com
 - https://test.com
 
@@ -148,9 +148,9 @@ Bluesky: This is a bluesky post."""
         assert "- https://test.com" in enlaces
     
     def test_parse_output_without_enlaces(self):
-        """Test parsing output without enlaces section."""
-        text = """Título: Test Title
-Texto: This is the main text content.
+        """Test parsing output without links section."""
+        text = """Title: Test Title
+Text: This is the main text content.
 
 Bluesky: This is a bluesky post."""
         
@@ -165,10 +165,10 @@ Bluesky: This is a bluesky post."""
     
     def test_parse_output_without_bluesky(self):
         """Test parsing output without bluesky section."""
-        text = """Título: Test Title
-Texto: This is the main text content.
+        text = """Title: Test Title
+Text: This is the main text content.
 
-Enlaces:
+Links:
 - https://example.com"""
         
         generator = NewsGenerator()
