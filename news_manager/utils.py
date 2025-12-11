@@ -24,6 +24,8 @@ def select_from_list(options, identifier="", selector="", default=""):
                 selection = int(selection)
                 if 0 <= selection < len(options):
                     return selection, options[selection]
+            elif selection.startswith('http'):
+                return len(options)-1, selection
             else:
                 for i, option in enumerate(options):
                     if selection.lower() in option.lower():
@@ -36,7 +38,7 @@ def select_from_list(options, identifier="", selector="", default=""):
         print("Invalid selection. Please try again.")
 
 
-def get_content_from_web():
+def get_content_from_web(url=None):
     """
     Prompts user for a URL and returns it.
 
@@ -44,7 +46,8 @@ def get_content_from_web():
         Tuple of (url, source_description) or (None, None) if cancelled
     """
     try:
-        url = input("Enter the URL of the news article: ").strip()
+        if not url:
+            url = input("Enter the URL of the news article: ").strip()
         if not url:
             print("No URL provided.")
             return None, None
@@ -95,7 +98,7 @@ def select_news_source():
             print(f"Warning: Could not load email sources: {e}")
 
     # Add web option at the end
-    optionWebName = "Web"
+    optionWebName = "Web (An URL is ok) "
     sources.append(optionWebName)
 
     if not sources or (len(sources) == 1 and sources[0] == optionWebName):
@@ -108,8 +111,12 @@ def select_news_source():
         return None
 
     # Check if web was selected (always the last option)
-    if selected == optionWebName:
-        url, description = get_content_from_web()
+    if ((selected == optionWebName)
+        or (selected.startswith('http'))):
+        url = None
+        if selected.startswith('http'):
+            url = selected
+        url, description = get_content_from_web(url)
         if url is None:
             return None
         return {
