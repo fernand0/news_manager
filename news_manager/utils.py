@@ -59,47 +59,10 @@ def get_content_from_web(url=None):
         return None, None
 
 
-def select_news_source():
-    """
-    Presents a unified menu to select the news source (email accounts or web).
-    Shows all available email accounts plus "Web (URL)" option at the end.
+# Constants
+optionWebName = "Web (An URL is ok) "
 
-    Returns:
-        Dictionary with keys:
-            - 'type': 'email' or 'web'
-            - 'content': content text (for email) or None (for web)
-            - 'url': URL string (for web) or None
-            - 'description': human-readable description of the source
-            - 'api_src': API source object (for email) or None
-        Returns None if selection was cancelled or failed.
-    """
-    print("\n--- Select news source ---")
-
-    # Build list of available sources
-    sources = []
-    email_sources = []
-
-    if SOCIALMODULES_AVAILABLE:
-        try:
-            rules = moduleRules.moduleRules()
-            rules.checkRules()
-
-            # Get all available email accounts (gmail and imap)
-            api_src_types = ["gmail", "imap"]
-            all_rules = rules.selectRule(api_src_types, "")
-
-            for source_name in all_rules:
-                source_details = rules.more.get(source_name, {})
-                service_type = source_details.get('what', 'Email')
-                sources.append(f"{source_name} ({service_type})")
-                email_sources.append((source_name, source_details))
-
-        except Exception as e:
-            print(f"Warning: Could not load email sources: {e}")
-
-    # Add web option at the end
-    optionWebName = "Web (An URL is ok) "
-    sources.append(optionWebName)
+def select_news_source():    sources.append(optionWebName)
 
     if not sources or (len(sources) == 1 and sources[0] == optionWebName):
         print("Note: Only web sources are available (no email accounts configured)")
@@ -111,8 +74,7 @@ def select_news_source():
         return None
 
     # Check if web was selected (always the last option)
-    if ((selected == optionWebName)
-        or (selected.startswith('http'))):
+    if ("Web" in selected) or (selected.startswith('http')):
         url = None
         if selected.startswith('http'):
             url = selected
