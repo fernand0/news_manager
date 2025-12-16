@@ -266,10 +266,10 @@ def extract_person_names(text: str) -> List[str]:
         List of extracted names
     """
     patterns = [
-        r'\b(?:Dr\.|Dra\.|Prof\.|Profesora)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b',
-        r'\b([A-Z][a-z]+)\s+(?:y|e)\s+([A-Z][a-z]+)\b',
-        r'\b([A-Z][a-z]+)\s+([A-Z][a-z]+)\b',
-        r'\b(?:el|la)\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)\b'
+        r'\b(?:Dr\.|Dra\.|Prof\.|Profesora)\s+([A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+(?:\s+[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+)*)\b',
+        r'\b([A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+)\s+(?:y|e)\s+([A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+)\b',
+        r'\b([A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+)\s+([A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+)\b',
+        r'\b(?:el|la)\s+([A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+)\s+([A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+)\b'
     ]
 
     names = set()

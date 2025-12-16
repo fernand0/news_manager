@@ -103,6 +103,12 @@ class FileManager:
         slug = self._generate_news_slug(titulo, texto)
         
         filename = f"{fecha_str}-{slug}.txt"
+        
+        # Ask for filename confirmation
+        new_filename = input(f"Sugerencia de nombre de archivo: '{filename}'. Púlsalo para aceptar o introduce uno nuevo: ")
+        if new_filename:
+            filename = new_filename
+
         file_path = self.output_dir / filename
         
         # Write content to file
@@ -143,6 +149,12 @@ class FileManager:
             slug = slugify(input_text, max_words=3)
         
         filename = f"{today_str}-{slug}_blsky.txt"
+        
+        # Ask for filename confirmation
+        new_filename = input(f"Sugerencia de nombre de archivo: '{filename}'. Púlsalo para aceptar o introduce uno nuevo: ")
+        if new_filename:
+            filename = new_filename
+
         file_path = self.output_dir / filename
         
         # Write content to file
