@@ -168,8 +168,7 @@ def _handle_bluesky_interactive(content: dict, user: str):
             content['bluesky'] = edited_text.strip()
             click.echo(f"\n--- Modified post ---\n{content['bluesky']}\n")
 
-    if click.confirm('Do you want to publish the post on Bluesky?', default=True):
-        publish_content(content['bluesky'], user)
+    publish_content(content['bluesky'], user)
 
 
 def _handle_interactive_prompt() -> str:
