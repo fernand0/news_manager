@@ -131,20 +131,24 @@ class NewsGenerator:
     def _generate_news_content(self, content: str, prompt_extra: Optional[str] = None, url: Optional[str] = None) -> Dict[str, Any]:
         """
         Generate complete news content using the LLM.
-        
+
         Args:
             content: Input content to generate news from
             prompt_extra: Additional instructions for the AI
             url: Source URL if applicable
-            
+
         Returns:
             Dictionary with parsed news components
         """
         logger.info("Generating news content with LLM")
-        
+
         generated_text = self.llm_client.generate_news(content, prompt_extra, url)
         titulo, texto, bluesky, enlaces = self._parse_output(generated_text)
-        
+
+        # If there's a Bluesky post and a URL, replace placeholders with the actual URL
+        if bluesky and url:
+            bluesky = self._replace_url_placeholder(bluesky, url)
+
         return {
             'titulo': titulo,
             'texto': texto,
@@ -180,7 +184,7 @@ class NewsGenerator:
         _, _, bluesky, _ = self._parse_output(generated_text)
         
         if bluesky and url:
-            bluesky = bluesky.replace('[link to the news]', url)
+            bluesky = self._replace_url_placeholder(bluesky, url)
         
         return {
             'titulo': None,
@@ -237,6 +241,88 @@ class NewsGenerator:
             texto = '\n'.join(buffer).strip()
 
         return titulo, texto, bluesky, enlaces
+
+    def _replace_url_placeholder(self, text: str, url: str) -> str:
+        """
+        Replace URL placeholders in text with the actual URL, with validation.
+        
+        Args:
+            text: Text that may contain URL placeholders
+            url: The URL to replace placeholders with
+            
+        Returns:
+            Text with URL placeholders replaced
+        """
+        import re
+        
+        # Validate URL format
+        if not self._is_valid_url(url):
+            logger.warning(f"Invalid URL format: {url}")
+            return text  # Return original text without replacement
+            
+        # Define possible placeholders
+        placeholders = [
+            r'\[link to the news\]',
+            r'\[link to news\]',
+            r'\[news link\]',
+            r'\[enlace a la noticia\]',
+            r'\[enlace a la noticia\]',
+            r'\[noticia\]'
+        ]
+        
+        # Replace any of the placeholders with the URL
+        for placeholder in placeholders:
+            text = re.sub(placeholder, url, text, flags=re.IGNORECASE)
+            
+        # Also handle cases where the URL might already be present but malformed
+        # Clean up any duplicate or malformed URLs
+        text = self._clean_urls(text)
+        
+        return text
+    
+    def _is_valid_url(self, url: str) -> bool:
+        """
+        Validate if the given string is a properly formatted URL.
+        
+        Args:
+            url: URL string to validate
+            
+        Returns:
+            True if URL is valid, False otherwise
+        """
+        import re
+        url_pattern = re.compile(
+            r'^https?://'  # http:// or https://
+            r'(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}'  # Domain name
+            r'(?:/[^\s]*)?$'  # Optional path
+        )
+        return bool(url_pattern.match(url))
+    
+    def _clean_urls(self, text: str) -> str:
+        """
+        Clean up URLs in the text to prevent duplicates or formatting issues.
+        
+        Args:
+            text: Text that may contain URLs
+            
+        Returns:
+            Cleaned text
+        """
+        import re
+        
+        # Replace multiple consecutive identical URLs with a single one
+        # This regex finds a URL followed by whitespace and the same URL again
+        # It repeats until no more duplicates are found
+        prev_text = None
+        while prev_text != text:
+            prev_text = text
+            # Look for a URL followed by any whitespace and the same URL again
+            text = re.sub(r'(https?://[^\s]+)\s+\1', r'\1', text)
+        
+        # Ensure proper spacing around URLs
+        text = re.sub(r'\s+', ' ', text)  # Normalize whitespace
+        
+        return text.strip()
 
 
 def siguiente_laborable(fecha: date) -> date:

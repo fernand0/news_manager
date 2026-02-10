@@ -125,44 +125,144 @@ class FileManager:
     def _save_bluesky_file(self, bluesky_content: str, input_text: str) -> Optional[Path]:
         """
         Save Bluesky content to a file.
-        
+
         Args:
             bluesky_content: Bluesky post content
             input_text: Original input text for slug generation
-            
+
         Returns:
             Path to saved file, or None if no content to save
         """
         if not bluesky_content:
             logger.warning("No Bluesky content to save")
             return None
-        
+
         # Generate filename for Bluesky content
         today = datetime.now().date()
         today_str = today.strftime('%Y-%m-%d')
-        
+
         # Use test slug if available, otherwise generate from input
         test_slug = os.getenv('NEWS_TEST_SLUG')
         if test_slug:
             slug = test_slug
         else:
-            slug = slugify(input_text, max_words=3)
-        
+            # Check if input_text contains a URL and extract meaningful parts for DIIS
+            slug = self._generate_bluesky_slug(input_text)
+
         filename = f"{today_str}-{slug}_blsky.txt"
-        
+
         # Ask for filename confirmation
         new_filename = input(f"Sugerencia de nombre de archivo: '{filename}'. Púlsalo para aceptar o introduce uno nuevo: ")
         if new_filename:
             filename = new_filename
 
         file_path = self.output_dir / filename
-        
+
         # Write content to file
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(bluesky_content + '\n')
-        
+
         logger.info(f"Bluesky content saved to: {file_path}")
         return file_path
+
+    def _generate_bluesky_slug(self, input_text: str) -> str:
+        """
+        Generate a slug for Bluesky files, with special handling for URLs like DIIS.
+
+        Args:
+            input_text: Input text that may contain a URL
+
+        Returns:
+            Generated slug
+        """
+        import re
+        
+        # Check if input contains a URL and it's a DIIS URL
+        url_match = re.search(r'https?://[\w.-]+/[^\\\s]+', input_text)
+        if url_match:
+            url = url_match.group(0)
+            if 'diis.unizar.es' in url:
+                # Extract meaningful parts from the DIIS URL
+                # Example: https://diis.unizar.es/es/noticias/jorge-gracia-lidera-el-proyecto-clasik-que-busca-eliminar-las-barreras-linguisticas-en-la
+                # We want to extract the last part after the last slash
+                path_parts = url.rstrip('/').split('/')
+                if len(path_parts) > 4:  # Ensure we have enough parts
+                    slug_part = path_parts[-1]  # Last part of the URL
+                    # Remove trailing parts that might be incomplete
+                    if len(slug_part) <= 3:  # If the last part is too short, use the previous one
+                        slug_part = path_parts[-2]
+                    
+                    # Clean up the slug part to remove special characters
+                    import unicodedata
+                    original_slug_part = slug_part  # Keep original for name/acronym detection
+                    slug_part = unicodedata.normalize('NFKD', slug_part).encode('ascii', 'ignore').decode('ascii')
+                    slug_part = re.sub(r'[^\w\s-]', '', slug_part.lower())
+                    
+                    # Split into words and filter: keep names, acronyms, and meaningful words
+                    words = slug_part.split('-')
+                    original_words = original_slug_part.split('-')  # Keep original case for name detection
+                    
+                    meaningful_words = []
+                    for i, word in enumerate(words):
+                        original_word = original_words[i] if i < len(original_words) else word
+                        
+                        # Keep words longer than 3 chars, names (had uppercase at start), or potential acronyms (was all caps)
+                        if (len(word) > 3 or 
+                            (len(original_word) > 1 and original_word[0].isupper()) or  # Name detection
+                            (len(original_word) >= 2 and original_word.isupper())):    # Acronym detection
+                            meaningful_words.append(word)
+                    
+                    # Take up to 4 meaningful words for a cleaner slug
+                    slug_part = '-'.join(meaningful_words[:4])
+                    
+                    # Limit length and clean up
+                    if len(slug_part) > 50:
+                        slug_part = slug_part[:50]
+                    
+                    # Remove any trailing hyphens
+                    slug_part = slug_part.rstrip('-')
+                    
+                    if slug_part:
+                        return slug_part
+            else:
+                # For non-DIIS URLs, extract the path part for a cleaner slug
+                path_parts = url.rstrip('/').split('/')
+                if len(path_parts) > 3:  # Ensure we have enough parts
+                    slug_part = path_parts[-1]  # Last part of the URL
+                    if len(slug_part) > 30:
+                        slug_part = slug_part[:30]
+                    slug_part = slug_part.rstrip('-')
+                    
+                    if slug_part:
+                        # Clean up the slug part to remove special characters
+                        import unicodedata
+                        original_slug_part = slug_part  # Keep original for name/acronym detection
+                        slug_part = unicodedata.normalize('NFKD', slug_part).encode('ascii', 'ignore').decode('ascii')
+                        slug_part = re.sub(r'[^\w\s-]', '', slug_part.lower())
+                        
+                        # Split into words and filter: keep names, acronyms, and meaningful words
+                        words = slug_part.split('-')
+                        original_words = original_slug_part.split('-')  # Keep original case for name detection
+                        
+                        meaningful_words = []
+                        for i, word in enumerate(words):
+                            original_word = original_words[i] if i < len(original_words) else word
+                            
+                            # Keep words longer than 3 chars, names (had uppercase at start), or potential acronyms (was all caps)
+                            if (len(word) > 3 or 
+                                (len(original_word) > 1 and original_word[0].isupper()) or  # Name detection
+                                (len(original_word) >= 2 and original_word.isupper())):    # Acronym detection
+                                meaningful_words.append(word)
+                        
+                        # Take up to 4 meaningful words for a cleaner slug
+                        slug_part = '-'.join(meaningful_words[:4])
+                        
+                        # If the slug part is still meaningful, use it
+                        if len(slug_part) > 3:
+                            return slug_part
+        
+        # Fallback to regular slugify
+        return slugify(input_text, max_words=3)
     
     def _generate_news_slug(self, titulo: str, texto: str) -> str:
         """
