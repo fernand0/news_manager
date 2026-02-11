@@ -62,7 +62,9 @@ def get_content_from_web(url=None):
 # Constants
 optionWebName = "Web (An URL is ok) "
 
-def select_news_source():    sources.append(optionWebName)
+def select_news_source():    
+
+    sources.append(optionWebName)
 
     if not sources or (len(sources) == 1 and sources[0] == optionWebName):
         print("Note: Only web sources are available (no email accounts configured)")
