@@ -64,6 +64,7 @@ class GeminiClient(LLMClient):
         try:
             genai.configure(api_key=api_key)
             self.model = genai.GenerativeModel('gemini-2.5-flash')
+            #self.model = genai.GenerativeModel('gemini-2.0-flash-lite')
         except Exception as e:
             raise ConfigurationError(
                 "Failed to initialize Gemini client",
