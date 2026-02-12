@@ -19,6 +19,8 @@ dependencies = [
 dev = [
     "pytest",
     "pytest-mock",
+    "pytest-cov",
+    "pytest-dotenv"
 ]
 
 [build-system]

@@ -3,6 +3,8 @@ import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import datetime, date
+from typing import Optional
 
 from .utils import select_from_list, select_news_source
 from .news_generator import NewsGenerator
@@ -26,6 +28,70 @@ def cli():
     """
     setup_logging()
 
+
+def _find_existing_bluesky_post(url: str, output_dir: Path, file_manager: FileManager) -> Optional[str]:
+    """
+    Searches for an existing Bluesky post file related to the given URL.
+    If found, it offers the user to use its content.
+    
+    Args:
+        url: The URL to search for.
+        output_dir: The directory to search in.
+        file_manager: The FileManager instance to generate slugs.
+        
+    Returns:
+        The content of the existing Bluesky post if the user chooses to use it, otherwise None.
+    """
+    if not output_dir or not output_dir.is_dir():
+        return None
+
+    # Generate the expected slug from the URL
+    expected_slug = file_manager._generate_bluesky_slug(url)
+    
+    if not expected_slug:
+        return None
+
+    # Search for files matching the pattern: YYYY-MM-DD-expected-slug_blsky.txt
+    # We'll be flexible with the date part.
+    matching_files = []
+    for f in output_dir.glob(f"*-{expected_slug}_blsky.txt"):
+        matching_files.append(f)
+
+    if not matching_files:
+        return None
+
+    # If in non-interactive mode, simply return None or the most recent file without asking
+    if os.getenv('NEWS_MANAGER_NON_INTERACTIVE') == '1':
+        # For non-interactive tests, we might want to automatically pick the most recent
+        # or just skip if not explicitly testing this interactive flow.
+        # For now, let's just return None to force new generation in tests.
+        return None
+
+    # Sort by modification time (most recent first)
+    matching_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+
+    click.echo(f"\n--- Found existing Bluesky post candidates for URL: {url} ---")
+    
+    for i, file_path in enumerate(matching_files):
+        click.echo(f"  {i+1}. {file_path.name} (Last modified: {datetime.fromtimestamp(file_path.stat().st_mtime).strftime('%Y-%m-%d %H:%M')})")
+
+    chosen_index = click.prompt(
+        "Enter the number of the post you want to use, or 0 to generate a new one",
+        type=int,
+        default=0
+    )
+
+    if chosen_index > 0 and chosen_index <= len(matching_files):
+        chosen_file = matching_files[chosen_index - 1]
+        with open(chosen_file, 'r', encoding='utf-8') as f:
+            content = f.read().strip()
+        
+        click.echo(f"\n--- Content of chosen post ({chosen_file.name}) ---\n{content}\n")
+        
+        if click.confirm('Do you want to publish this existing post?', default=True):
+            return content
+            
+    return None
 
 
 @cli.command()
@@ -100,6 +166,18 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir, user
         output_dir_path = _determine_output_directory(output_dir)
         file_manager = FileManager(output_dir_path)
 
+        # Determine Bluesky user
+        bluesky_user = _determine_bluesky_user(user)
+        if bluesky_user is None:
+            click.echo("Error: Bluesky user not specified. Use --user option or set BLUESKY_USER environment variable.", err=True)
+            sys.exit(1)
+        
+        # Determine Bluesky user
+        bluesky_user = _determine_bluesky_user(user)
+        if bluesky_user is None:
+            click.echo("Error: Bluesky user not specified. Use --user option or set BLUESKY_USER environment variable.", err=True)
+            sys.exit(1)
+
         click.echo("--- Initializing AI client and generating news... ---")
 
         # Determine the source and generate news content
@@ -125,6 +203,26 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir, user
                 content = news_generator.generate_from_url(source_info['url'], prompt_extra)
                 input_text = ""
         elif url:
+            # Check for existing Bluesky posts before generating new content
+            if output_dir_path:
+                pre_existing_bluesky_content = _find_existing_bluesky_post(url, output_dir_path, file_manager)
+                if pre_existing_bluesky_content:
+                    # User chose to use existing content
+                    content = {
+                        'titulo': None,
+                        'texto': None,
+                        'bluesky': pre_existing_bluesky_content,
+                        'enlaces': [],
+                        'raw_output': pre_existing_bluesky_content,
+                        'bluesky_only': True
+                    }
+                    _handle_bluesky_interactive(content, bluesky_user)
+                    if file_manager.output_dir:
+                        # Optionally save the existing post again to update its timestamp or similar
+                        # For now, just display that it was used
+                        click.echo(f"--- Used existing Bluesky post for publication ---")
+                    return # Exit after handling existing content
+
             click.echo(f"--- Downloading and extracting news from: {url} ---")
             content = news_generator.generate_from_url(url, prompt_extra)
             input_text = ""  # Not needed for URL-based generation
@@ -140,7 +238,7 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir, user
 
         # Display and save content
         if content.get('bluesky_only'):
-            _handle_bluesky_interactive(content, user)
+            _handle_bluesky_interactive(content, bluesky_user)
             if file_manager.output_dir:
                 saved_files = file_manager.save_news_content(content, input_text)
                 _display_saved_files(saved_files)
@@ -162,11 +260,15 @@ def _handle_bluesky_interactive(content: dict, user: str):
     """Handle the interactive workflow for Bluesky posts."""
     click.echo(f"\n--- Candidate for Bluesky post ---\n{content['bluesky']}\n")
 
+    if os.getenv('NEWS_MANAGER_NON_INTERACTIVE') == '1':
+        return
+
     if click.confirm('Do you want to modify the post?', default=False):
         edited_text = click.edit(content['bluesky'])
         if edited_text is not None:
             content['bluesky'] = edited_text.strip()
             click.echo(f"\n--- Modified post ---\n{content['bluesky']}\n")
+
 
     publish_content(content['bluesky'], user)
 
@@ -212,6 +314,12 @@ def _determine_output_directory(output_dir: Path) -> Path:
         return Path(env_output_dir)
 
     return None
+
+def _determine_bluesky_user(user_option: Optional[str]) -> Optional[str]:
+    """Determine the Bluesky user from the option or environment variable."""
+    if user_option:
+        return user_option
+    return os.getenv('BLUESKY_USER')
 
 
 def _display_content(content: dict):

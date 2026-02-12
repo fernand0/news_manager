@@ -102,7 +102,6 @@ def select_news_source():
 
     # Add web option at the end
     optionWebName = "Web (An URL is ok) "
->>>>>>> 1c942113ba13126112c95420b08ad4f85e1e1ccb
 
     sources.append(optionWebName)
 

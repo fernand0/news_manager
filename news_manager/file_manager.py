@@ -147,7 +147,7 @@ class FileManager:
             slug = test_slug
         else:
             # Check if input_text contains a URL and extract meaningful parts for DIIS
-            slug = self._generate_bluesky_slug(input_text)
+            slug = self._generate_bluesky_slug(bluesky_content)
 
         filename = f"{today_str}-{slug}_blsky.txt"
 
@@ -165,12 +165,12 @@ class FileManager:
         logger.info(f"Bluesky content saved to: {file_path}")
         return file_path
 
-    def _generate_bluesky_slug(self, input_text: str) -> str:
+    def _generate_bluesky_slug(self, content: str) -> str:
         """
         Generate a slug for Bluesky files, with special handling for URLs like DIIS.
 
         Args:
-            input_text: Input text that may contain a URL
+            content: Input text that may contain a URL
 
         Returns:
             Generated slug
@@ -178,7 +178,7 @@ class FileManager:
         import re
         
         # Check if input contains a URL and it's a DIIS URL
-        url_match = re.search(r'https?://[\w.-]+/[^\\\s]+', input_text)
+        url_match = re.search(r'https?://[\w.-]+/[^\\\s]+', content)
         if url_match:
             url = url_match.group(0)
             if 'diis.unizar.es' in url:
@@ -262,7 +262,7 @@ class FileManager:
                             return slug_part
         
         # Fallback to regular slugify
-        return slugify(input_text, max_words=3)
+        return slugify(content, max_words=3)
     
     def _generate_news_slug(self, titulo: str, texto: str) -> str:
         """

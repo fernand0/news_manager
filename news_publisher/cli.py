@@ -50,7 +50,7 @@ def publish_content(content, user):
         if not parser.sections():
             click.echo('No se encontró ningún perfil en ~/.mySocial/config/.rssBlsk', err=True)
             sys.exit(1)
-        user = parser.sections()[-1]
+        user = parser.sections()[-2]
         click.echo(f'Usando usuario de Bluesky: {user}')
     try:
         from socialModules.configMod import getApi
