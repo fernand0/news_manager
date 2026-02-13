@@ -154,7 +154,8 @@ class NewsGenerator:
             'texto': texto,
             'bluesky': bluesky,
             'enlaces': enlaces,
-            'raw_output': generated_text
+            'raw_output': generated_text,
+            'url': url
         }
     
     def _generate_bluesky_only(self, content: str, url: str) -> Dict[str, Any]:
@@ -192,7 +193,8 @@ class NewsGenerator:
             'bluesky': bluesky,
             'enlaces': [],
             'raw_output': generated_text,
-            'bluesky_only': True
+            'bluesky_only': True,
+            'url': url
         }
     
     def _parse_output(self, generated_text: str) -> Tuple[Optional[str], Optional[str], Optional[str], List[str]]:

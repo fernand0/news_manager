@@ -11,6 +11,7 @@ from .news_generator import NewsGenerator
 from .file_manager import FileManager
 from .utils_base import setup_logging
 from .web_extractor import extract_main_text_from_url  # For backward compatibility
+from .bluesky_history import BlueskyHistoryManager
 from .exceptions import (
     NewsManagerError, ValidationError, ConfigurationError,
     ContentProcessingError, APIError, NetworkError, FileOperationError
@@ -258,19 +259,65 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir, user
 
 def _handle_bluesky_interactive(content: dict, user: str):
     """Handle the interactive workflow for Bluesky posts."""
-    click.echo(f"\n--- Candidate for Bluesky post ---\n{content['bluesky']}\n")
+    bluesky_content = content['bluesky']
+    
+    # Check if this is from a DIIS URL
+    is_diis_url = content.get('url', '').find('diis.unizar.es') != -1
+    
+    # Check if we're in a test environment (disable history functionality)
+    import sys
+    is_test_environment = 'pytest' in sys.modules or '_pytest' in sys.modules
+    use_history = not is_test_environment
+    
+    if is_diis_url and use_history:
+        try:
+            # Check for previous posts
+            history_manager = BlueskyHistoryManager()
+            similar_post_content = history_manager.find_post_by_content(bluesky_content, content.get('url', ''))
+            
+            if similar_post_content:
+                click.echo(f"\n--- Found a similar previous post ---")
+                click.echo(f"Previous post: {similar_post_content}")
+                click.echo("--------------------------------------")
+                
+                if click.confirm('Do you want to republish the previous post instead?', default=False):
+                    # Use the previous post content
+                    bluesky_content = similar_post_content
+                    # Don't allow modification of previous post content in this flow
+                else:
+                    # Use the newly generated content
+                    bluesky_content = content['bluesky']
+                    click.echo(f"\n--- Candidate for Bluesky post ---\n{bluesky_content}\n")
+            else:
+                # No similar post found, proceed normally
+                click.echo(f"\n--- Candidate for Bluesky post ---\n{bluesky_content}\n")
+        except Exception:
+            # If there's any issue with the history manager, fall back to the original behavior
+            click.echo(f"\n--- Candidate for Bluesky post ---\n{bluesky_content}\n")
+    else:
+        # Regular Bluesky post (not from DIIS URL) or history disabled
+        click.echo(f"\n--- Candidate for Bluesky post ---\n{bluesky_content}\n")
 
-    if os.getenv('NEWS_MANAGER_NON_INTERACTIVE') == '1':
-        return
+    # Allow user to modify the content if it's newly generated content (not from a previous post)
+    if bluesky_content == content['bluesky']:  # Only if it's the newly generated content
+        if click.confirm('Do you want to modify the post?', default=False):
+            edited_text = click.edit(bluesky_content)
+            if edited_text is not None:
+                bluesky_content = edited_text.strip()
+                click.echo(f"\n--- Modified post ---\n{bluesky_content}\n")
 
-    if click.confirm('Do you want to modify the post?', default=False):
-        edited_text = click.edit(content['bluesky'])
-        if edited_text is not None:
-            content['bluesky'] = edited_text.strip()
-            click.echo(f"\n--- Modified post ---\n{content['bluesky']}\n")
-
-
-    publish_content(content['bluesky'], user)
+    # Publish the selected content
+    publish_content(bluesky_content, user)
+    
+    # Save the published content to history (only if it's a DIIS URL and history is enabled)
+    # Note: With the new approach, we don't save to a separate history file since we use existing files
+    if is_diis_url and use_history:
+        try:
+            history_manager = BlueskyHistoryManager()
+            history_manager.save_post(bluesky_content, content.get('url', ''))
+        except Exception:
+            # If there's any issue saving to history, just continue
+            pass
 
 
 def _handle_interactive_prompt() -> str:

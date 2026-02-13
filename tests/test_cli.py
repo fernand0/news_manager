@@ -261,13 +261,15 @@ class TestGenerateCommand:
 
             'raw_output': 'Generated content',
 
-            'bluesky_only': True
+            'bluesky_only': True,
+
+            'url': test_url
 
         }
 
         
 
-        result = runner.invoke(cli, ['generate', '--url', test_url], input='n\nn\n')
+        result = runner.invoke(cli, ['generate', '--url', test_url], input='n\nn\nn\n')
 
         
 
@@ -426,7 +428,9 @@ class TestGenerateCommand:
 
             'raw_output': 'Generated content',
 
-            'bluesky_only': True
+            'bluesky_only': True,
+
+            'url': test_url
 
         }
 
@@ -438,7 +442,7 @@ class TestGenerateCommand:
 
         
 
-        result = runner.invoke(cli, ['generate', '--url', test_url, '--output-dir', test_output_dir], input='n\nn\n')
+        result = runner.invoke(cli, ['generate', '--url', test_url, '--output-dir', test_output_dir], input='n\nn\nn\n')
 
         assert result.exit_code == 0
 
