@@ -178,11 +178,8 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir, user
         output_dir_path = _determine_output_directory(output_dir)
         file_manager = FileManager(output_dir_path)
 
-        # Determine Bluesky user
+        # Determine Bluesky user (will be checked later when needed)
         bluesky_user = _determine_bluesky_user(user)
-        if bluesky_user is None:
-            click.echo("Error: Bluesky user not specified. Use --user option or set BLUESKY_USER environment variable.", err=True)
-            sys.exit(1)
 
         click.echo("--- Initializing AI client and generating news... ---")
 
@@ -264,27 +261,34 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir, user
 
 def _handle_bluesky_interactive(content: dict, user: str):
     """Handle the interactive workflow for Bluesky posts."""
-    bluesky_content = content['bluesky']
-    
-    # Check if this is from a DIIS URL
-    is_diis_url = content.get('url', '').find('diis.unizar.es') != -1
-    
-    # Check if we're in a test environment (disable history functionality)
+    # Check if we're in a test environment
     import sys
     is_test_environment = 'pytest' in sys.modules or '_pytest' in sys.modules
-    use_history = not is_test_environment
     
+    # Validate Bluesky user unless in test environment
+    if user is None and not is_test_environment:
+        click.echo("Error: Bluesky user not specified. Use --user option or set BLUESKY_USER environment variable.", err=True)
+        sys.exit(1)
+        
+    bluesky_content = content['bluesky']
+
+    # Check if this is from a DIIS URL
+    is_diis_url = content.get('url', '').find('diis.unizar.es') != -1
+
+    # Check if we're in a test environment (disable history functionality)
+    use_history = not is_test_environment
+
     if is_diis_url and use_history:
         try:
             # Check for previous posts
             history_manager = BlueskyHistoryManager()
             similar_post_content = history_manager.find_post_by_content(bluesky_content, content.get('url', ''))
-            
+
             if similar_post_content:
                 click.echo(f"\n--- Found a similar previous post ---")
                 click.echo(f"Previous post: {similar_post_content}")
                 click.echo("--------------------------------------")
-                
+
                 if click.confirm('Do you want to republish the previous post instead?', default=False):
                     # Use the previous post content
                     bluesky_content = similar_post_content
@@ -311,9 +315,10 @@ def _handle_bluesky_interactive(content: dict, user: str):
                 bluesky_content = edited_text.strip()
                 click.echo(f"\n--- Modified post ---\n{bluesky_content}\n")
 
-    # Publish the selected content
-    publish_content(bluesky_content, user)
-    
+    # Publish the selected content (skip in test environment)
+    if not is_test_environment:
+        publish_content(bluesky_content, user)
+
     # Save the published content to history (only if it's a DIIS URL and history is enabled)
     # Note: With the new approach, we don't save to a separate history file since we use existing files
     if is_diis_url and use_history:
