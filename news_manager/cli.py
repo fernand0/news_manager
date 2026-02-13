@@ -34,12 +34,12 @@ def _find_existing_bluesky_post(url: str, output_dir: Path, file_manager: FileMa
     """
     Searches for an existing Bluesky post file related to the given URL.
     If found, it offers the user to use its content.
-    
+
     Args:
         url: The URL to search for.
         output_dir: The directory to search in.
         file_manager: The FileManager instance to generate slugs.
-        
+
     Returns:
         The content of the existing Bluesky post if the user chooses to use it, otherwise None.
     """
@@ -48,15 +48,26 @@ def _find_existing_bluesky_post(url: str, output_dir: Path, file_manager: FileMa
 
     # Generate the expected slug from the URL
     expected_slug = file_manager._generate_bluesky_slug(url)
-    
-    if not expected_slug:
-        return None
 
     # Search for files matching the pattern: YYYY-MM-DD-expected-slug_blsky.txt
     # We'll be flexible with the date part.
     matching_files = []
-    for f in output_dir.glob(f"*-{expected_slug}_blsky.txt"):
-        matching_files.append(f)
+    if expected_slug:
+        for f in output_dir.glob(f"*-{expected_slug}_blsky.txt"):
+            matching_files.append(f)
+
+    # If no matches found with the expected slug, try a more flexible approach
+    # by looking for any bluesky files that might contain the URL
+    if not matching_files:
+        for f in output_dir.glob(f"*_blsky.txt"):
+            try:
+                with open(f, 'r', encoding='utf-8') as file:
+                    content = file.read()
+                    # Check if this file's content contains the URL
+                    if url in content:
+                        matching_files.append(f)
+            except Exception:
+                continue  # Skip files that can't be read
 
     if not matching_files:
         return None
@@ -167,12 +178,6 @@ def generate(input_file, url, prompt_extra, interactive_prompt, output_dir, user
         output_dir_path = _determine_output_directory(output_dir)
         file_manager = FileManager(output_dir_path)
 
-        # Determine Bluesky user
-        bluesky_user = _determine_bluesky_user(user)
-        if bluesky_user is None:
-            click.echo("Error: Bluesky user not specified. Use --user option or set BLUESKY_USER environment variable.", err=True)
-            sys.exit(1)
-        
         # Determine Bluesky user
         bluesky_user = _determine_bluesky_user(user)
         if bluesky_user is None:
